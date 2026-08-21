@@ -1,7 +1,7 @@
 ---
 name: theme-forge
 description: "Use this skill whenever a user is starting, planning, auditing, or wiring a Shopify theme whose visual design is being developed outside Shopify, including requests to create a theme prototype, define merchant-facing settings, map HTML/CSS/JavaScript to Liquid, or produce a Shopify wiring report. Run /theme-forge init to create a theme-neutral design workspace, or /theme-forge wire to inspect an existing prototype and generate docs/shopify-wiring.md. Use it even when the user does not name Theme Forge but asks for a design-first Shopify theme workflow."
-compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. No package manager, runtime, framework, design tool, or Shopify credentials required."
+compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Depends on the frontend-design skill from https://github.com/anthropics/skills for visual direction and UI refinement. Package manager access (npx) is required only for automatic installation during init when the companion skill is missing. No runtime, framework, or Shopify credentials required."
 ---
 
 # Theme Forge
@@ -24,6 +24,14 @@ When the host supports slash commands, use:
 When the host does not support slash commands, interpret `init` and `wire` as the first user-provided argument to the skill. If no command is provided, explain the two commands and ask which one to run. Do not silently choose `init` or `wire`.
 
 The skill must work from a project directory, not only from the directory where the skill file is installed. Resolve all project paths relative to the user's selected project root.
+
+Companion skill dependency:
+
+- Treat `frontend-design` as a required companion skill for visual design and UX shaping tasks.
+- Use `frontend-design` whenever the user asks for UI direction, layout systems, typography, color systems, motion, responsive behavior, accessibility polish, or interface critique.
+- Run `frontend-design` before drafting major prototype aesthetics, then apply its guidance while preserving Theme Forge's design-first and Shopify-wiring boundaries.
+- During `/theme-forge init`, if `frontend-design` is missing, install it automatically with `npx skills add https://github.com/anthropics/skills --skill frontend-design`.
+- If auto-install fails, continue init and report the install failure under `unresolved` with the exact command output and a manual retry command.
 
 ### Command selection
 
@@ -78,10 +86,12 @@ Initialization root rule: run `/theme-forge init` against the selected project r
 Use this order:
 
 1. Inspect the project root and identify existing design, docs, assets, Shopify, and configuration directories.
-2. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
-3. Create only missing directories and files.
-4. Write the settings contract and wiring placeholder using the requested identity.
-5. Summarize created, updated, skipped, and unresolved items.
+2. Check whether `frontend-design` is installed and available.
+3. If missing, run `npx skills add https://github.com/anthropics/skills --skill frontend-design` before continuing.
+4. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
+5. Create only missing directories and files.
+6. Write the settings contract and wiring placeholder using the requested identity.
+7. Summarize created, updated, skipped, and unresolved items.
 
 ```text
 design/
