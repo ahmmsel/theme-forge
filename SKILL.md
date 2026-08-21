@@ -100,8 +100,9 @@ design/
   article.html
   blog.html
   cart.html
+  cart-drawer.html
   collection.html
-   collections-list.html
+  collections-list.html
   page.html
   page.contact.html
   password.html
@@ -178,7 +179,7 @@ These are recommendations, not mandatory categories. Add, merge, or rename group
 - **Layout:** page width, content gutters, spacing scale, media ratios, container variants, and corner-radius preset.
 - **Buttons and forms:** button style, arrow behavior, field style, focus-ring style, and density where the merchant needs control.
 - **Cards and media:** product, collection, and article card defaults; image ratio, fit, metadata, badges, swatches, and hover behavior.
-- **Cart and discovery:** cart mode, drawer behavior, cart fields, shipping progress, search modal, predictive search, quick actions, pagination, and recently viewed behavior.
+- **Cart and discovery:** cart page, cart drawer, cart mode, drawer behavior, cart fields, shipping progress, search modal, predictive search, quick actions, pagination, and recently viewed behavior.
 - **Navigation and behavior:** sticky and overlay header behavior, menus, selectors, account access, breadcrumbs, back-to-top, external links, reduced motion, and prose treatment.
 
 Do not expose implementation details as settings merely because they are technically configurable. A setting belongs in the global contract only when a merchant can understand its outcome and reasonably needs to change it across the storefront.
@@ -193,6 +194,7 @@ The initialization must account for these Shopify page experiences:
 | `article.html`          | `article.json`          | Article header, metadata, media, prose, sharing, related content            |
 | `blog.html`             | `blog.json`             | Blog listing, pagination/load-more, empty state                             |
 | `cart.html`             | `cart.json`             | Lines, quantities, removal, notes, discounts, totals, checkout, empty state |
+| `cart-drawer.html`      | Section via AJAX        | Slide-out drawer, same cart data, progressive enhancement, overlay behavior |
 | `collection.html`       | `collection.json`       | Collection header, product listing, filtering, sorting, empty state         |
 | `collections-list.html` | `collections-list.json` | Collection directory, card defaults, pagination/empty state                 |
 | `index.html`            | `index.json`            | Shared shell only until homepage sections are designed                      |
@@ -204,6 +206,463 @@ The initialization must account for these Shopify page experiences:
 | `gift_card.html`        | `gift_card.liquid`      | Gift-card value/code, barcode or QR, print, and wallet actions              |
 
 These are page contracts, not a section and block catalog. Do not invent homepage sections during `/theme-forge init`.
+
+## Shopify Liquid Reference Objects for Default Pages
+
+When designing prototypes and fixtures, include field coverage for each page's primary Liquid objects so the visual contract can accommodate real Shopify data shapes.
+
+Rules:
+
+- Treat this section as a fixture and UI coverage checklist, not a requirement to display every field in the final interface.
+- Include all listed fields in fixture data models for the matching page.
+- If a field is not surfaced in UI, still account for it in behavior, states, or documentation.
+- Do not invent unsupported fields; when Shopify docs and existing theme code disagree, mark the mismatch as `unresolved` in `docs/shopify-wiring.md`.
+
+### Product page (`product.html` -> `product.json`)
+
+Primary object: `product`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "available": true,
+  "category": {},
+  "collections": [],
+  "compare_at_price": "25.00",
+  "compare_at_price_max": "25.00",
+  "compare_at_price_min": "25.00",
+  "compare_at_price_varies": false,
+  "content": "<h3>...</h3>",
+  "created_at": "2022-04-13 14:46:16 -0400",
+  "description": "<h3>...</h3>",
+  "featured_image": {},
+  "featured_media": {},
+  "first_available_variant": {},
+  "gift_card?": false,
+  "handle": "health-potion",
+  "has_only_default_variant": false,
+  "id": 6786188247105,
+  "images": [],
+  "media": [],
+  "metafields": {},
+  "options": ["Size", "Strength"],
+  "options_by_name": {},
+  "options_with_values": [],
+  "price": "10.00",
+  "price_max": "22.00",
+  "price_min": "10.00",
+  "price_varies": true,
+  "published_at": "2022-04-13 14:53:34 -0400",
+  "quantity_price_breaks_configured?": false,
+  "requires_selling_plan": false,
+  "selected_or_first_available_selling_plan_allocation": {},
+  "selected_or_first_available_variant": {},
+  "selected_selling_plan": null,
+  "selected_selling_plan_allocation": null,
+  "selected_variant": null,
+  "selling_plan_groups": [],
+  "tags": ["healing"],
+  "template_suffix": "",
+  "title": "Health potion",
+  "type": {},
+  "url": {},
+  "variants": [],
+  "variants_count": 9,
+  "vendor": "Polina's Potent Potions"
+}
+```
+
+### Collection page (`collection.html` -> `collection.json`)
+
+Primary objects: `collection`, `collection.products`, `paginate`, `current_tags`, `sort_by`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+   "all_products_count": 10,
+   "all_tags": [
+      "Burning",
+      "dried",
+      "extracts",
+      "fresh",
+      "ingredients",
+      "plant",
+      "supplies"
+   ],
+   "all_types": [
+      "Animals & Pet Supplies",
+      "Baking Flavors & Extracts",
+      "Cooking & Baking Ingredients",
+      "Dried Flowers",
+      "Fruits & Vegetables",
+      "Seasonings & Spices",
+      "Water"
+   ],
+   "all_vendors": [
+      "Clover's Apothecary",
+      "Polina's Potent Potions",
+      "Ted's Apothecary Supply"
+   ],
+   "current_type": null,
+   "current_vendor": null,
+   "default_sort_by": "created-ascending",
+   "description": "Brew your own potions at home using our fresh, ethically-sourced ingredients.",
+   "featured_image": {},
+   "filters": {},
+   "handle": "ingredients",
+   "id": 266168401985,
+   "image": {},
+   "metafields": {},
+   "next_product": null,
+   "previous_product": null,
+   "products": {},
+   "products_count": 1,
+   "published_at": "2022-04-19 09:52:18 -0400",
+   "sort_by": "",
+   "sort_options": [],
+   "tags": [
+      "Burning"
+   ],
+   "template_suffix": "eight-products-per-page",
+   "title": "Ingredients",
+   "url": {}
+}
+```
+
+Field groups to cover:
+
+- Collection identity: title, description, handle, url, image, featured_image, template_suffix.
+- Merchandising metadata: products_count, all_tags, current_tags, default_sort_by, sort_options.
+- Product listing behavior: product card data requirements, empty collection state, unavailable products.
+- Filtering and sorting state: applied filters, clear-all behavior, zero-result behavior.
+- Pagination: current page, total pages, next/previous behavior and fallback.
+
+### Collections directory (`collections-list.html` -> `collections-list.json`)
+
+Primary objects: `collections`, `collection` items, optional `paginate`
+
+Field groups to cover:
+
+- Directory card basics: title, description excerpt, image, products_count, url, handle.
+- Ordering and visibility: sort strategy, hidden/empty collections, fallback media.
+- Empty and sparse states: no collections, missing image, long titles.
+
+### Cart page (`cart.html` -> `cart.json`)
+
+Primary objects: `cart`, `cart.items`, `line_item`, `routes`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "attributes": {},
+  "cart_level_discount_applications": [],
+  "checkout_charge_amount": "380.25",
+  "currency": {},
+  "discount_applications": [],
+  "discounts": [],
+  "duties_included": false,
+  "empty?": false,
+  "item_count": 2,
+  "items": [],
+  "items_subtotal_price": "422.49",
+  "note": "Hello this is a note",
+  "original_total_price": "380.25",
+  "requires_shipping": true,
+  "taxes_included": false,
+  "total_discount": "44.74",
+  "total_price": "380.25",
+  "total_weight": 0
+}
+```
+
+Line item object (`cart.items`):
+
+```json
+{
+  "discount_allocations": [],
+  "discounts": [],
+  "error_message": "",
+  "final_line_price": "74.97",
+  "final_price": "24.99",
+  "fulfillment": {},
+  "fulfillment_service": "manual",
+  "gift_card": false,
+  "grams": 0,
+  "id": 10974183882817,
+  "image": {},
+  "instructions": null,
+  "item_components": null,
+  "key": 10974183882817,
+  "line_level_discount_allocations": [],
+  "line_level_total_discount": "0.00",
+  "line_price": "74.97",
+  "message": "",
+  "options_with_values": [
+    {
+      "name": "Title",
+      "value": "Default Title"
+    }
+  ],
+  "original_line_price": "74.97",
+  "original_price": "24.99",
+  "parent_relationship": null,
+  "price": "24.99",
+  "product": {},
+  "product_id": 6792596455489,
+  "properties": {},
+  "quantity": 3,
+  "requires_shipping": true,
+  "selling_plan_allocation": null,
+  "sku": "",
+  "successfully_fulfilled_quantity": 2,
+  "tax_lines": [],
+  "taxable": true,
+  "title": "Bloodroot (whole)",
+  "total_discount": "0.00",
+  "unit_price": "49.98",
+  "unit_price_measurement": {
+    "measured_type": "weight",
+    "quantity_value": "500.0",
+    "quantity_unit": "g",
+    "reference_value": 1,
+    "reference_unit": "kg"
+  },
+  "url": {},
+  "url_to_remove": null,
+  "variant": {},
+  "variant_id": 39888235757633,
+  "vendor": "Clover's Apothecary"
+}
+```
+
+Field groups to cover:
+
+- Cart summary: item_count, total_price, original_total_price, total_discount, checkout_charge_amount, items_subtotal_price, note, currency, empty?, requires_shipping, taxes_included, duties_included, total_weight.
+- Cart discounts: cart_level_discount_applications, discount_applications, discounts.
+- Line items: key, id, product_id, variant_id, title, url, image, variant, quantity, properties, options_with_values, price, original_price, final_price, line_price, original_line_price, final_line_price, total_discount, line_level_total_discount, discounts, discount_allocations, line_level_discount_allocations.
+- Line item product context: product, vendor, sku, gift_card, taxable, requires_shipping, unit_price, unit_price_measurement.
+- Fulfillment: fulfillment, fulfillment_service, successfully_fulfilled_quantity, instructions, item_components.
+- Line item messaging: error_message, message.
+- Commerce actions: quantity updates, removal, notes, checkout path, continue shopping path, url_to_remove.
+- Edge states: empty cart, sold out, invalid quantity, discount conflicts, parent_relationship, selling_plan_allocation.
+
+### Cart drawer (section, not a template)
+
+Primary objects: same as cart page (`cart`, `cart.items`, `line_item`), plus `routes`
+
+The cart drawer is a slide-out panel rendered as a Shopify section, not a standalone template. It shares the same Liquid data objects as the cart page but is loaded via AJAX into a global container.
+
+Use this baseline field checklist in fixtures and design mapping (same cart/line_item objects as above):
+
+```json
+{
+  "attributes": {},
+  "cart_level_discount_applications": [],
+  "checkout_charge_amount": "380.25",
+  "currency": {},
+  "discount_applications": [],
+  "discounts": [],
+  "duties_included": false,
+  "empty?": false,
+  "item_count": 2,
+  "items": [],
+  "items_subtotal_price": "422.49",
+  "note": "Hello this is a note",
+  "original_total_price": "380.25",
+  "requires_shipping": true,
+  "taxes_included": false,
+  "total_discount": "44.74",
+  "total_price": "380.25",
+  "total_weight": 0
+}
+```
+
+Field groups to cover:
+
+- Data parity with cart page: same `cart` and `line_item` fields apply.
+- Drawer behavior: open/close triggers, overlay/backdrop, focus trap, ESC to close, body scroll lock.
+- AJAX loading: section-render-path (`cart` section ID), update targets, variant ID posting, quantity change endpoints.
+- Empty state: drawer-specific empty messaging, continue shopping link.
+- Progressive enhancement: works without JS via full cart page fallback.
+- Accessibility: `role="dialog"`, `aria-modal`, `aria-label`, `aria-live` for count/total updates, focus management.
+- Edge states: sold-out items, invalid quantity, pending state during AJAX, error rollback.
+- Design concerns: overlay opacity, transition animation, z-index stacking, responsive width, mobile full-screen variant.
+
+### Blog page (`blog.html` -> `blog.json`)
+
+Primary objects: `blog`, `blog.articles`, `article`, `paginate`, `current_tags`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "all_tags": [],
+  "articles": [],
+  "articles_count": 3,
+  "comments_enabled?": true,
+  "handle": "potion-notions",
+  "id": 78580613185,
+  "metafields": {},
+  "moderated?": true,
+  "next_article": {},
+  "previous_article": {},
+  "tags": [],
+  "template_suffix": "",
+  "title": "Potion Notions",
+  "url": "/blogs/potion-notions"
+}
+```
+
+Field groups to cover:
+
+- Blog identity: title, url, handle, id, template_suffix.
+- Listing metadata: articles_count, all_tags, tags, comments_enabled?, moderated?.
+- Article list: articles collection, article card fields (title, excerpt/content preview, image, author, published_at, url, comments_count).
+- Navigation: next_article, previous_article, pagination, current_tags filter.
+- Empty and filtered states: no posts, tag with no matches.
+- Metafields: blog-level metafields for custom data.
+
+### Article page (`article.html` -> `article.json`)
+
+Primary objects: `article`, `blog`, `comments`, `comment`, `form`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "author": "Polina Waters",
+  "comment_post_url": "/blogs/potion-notions/how-to-tell-if-you-have-run-out-of-invisibility-potion/comments",
+  "comments": [],
+  "comments_count": 1,
+  "comments_enabled?": true,
+  "content": "<p>We've all had this problem before: we peek into the potions vault to determine which potions we are running low on, and the invisibility potion bottle looks completely empty.</p>\n<p>...</p>\n<p> </p>",
+  "created_at": "2022-04-14 16:56:02 -0400",
+  "excerpt": "And where to buy <strong>more</strong>!",
+  "excerpt_or_content": "And where to buy <strong>more</strong>!",
+  "handle": "potion-notions/how-to-tell-if-you-have-run-out-of-invisibility-potion",
+  "id": 556510085185,
+  "image": {},
+  "metafields": {},
+  "moderated?": true,
+  "published_at": "2022-04-14 16:56:02 -0400",
+  "tags": [],
+  "template_suffix": "",
+  "title": "How to tell if you're out of invisibility potion",
+  "updated_at": "2022-06-04 19:27:33 -0400",
+  "url": {},
+  "user": {}
+}
+```
+
+Field groups to cover:
+
+- Article identity: title, id, handle, url, template_suffix.
+- Content: content (rich HTML), excerpt, excerpt_or_content, image.
+- Metadata: author, user, created_at, published_at, updated_at, tags.
+- Comments: comments_enabled?, moderated?, comments_count, comments collection, comment_post_url, comment form.
+- Navigation context: parent blog, previous/next article behavior if used.
+- Social and engagement: share URL targets, comments_count.
+- Comment lifecycle: list state, empty state, submission success, validation errors.
+- Metafields: article-level metafields for custom data.
+
+### Search page (`search.html` -> `search.json`)
+
+Primary objects: `search`, `search.results`, `paginate`, `routes`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "default_sort_by": "relevance",
+  "filters": {},
+  "performed": true,
+  "results": [],
+  "results_count": 17,
+  "sort_by": "relevance",
+  "sort_options": [],
+  "terms": "potion",
+  "types": [
+    "article",
+    "page",
+    "product"
+  ]
+}
+```
+
+Result types: `search.results` can contain `article`, `page`, or `product` objects. Each result type carries its own fields from the corresponding object checklist above.
+
+Field groups to cover:
+
+- Query state: terms, performed, results_count.
+- Sorting: default_sort_by, sort_by, sort_options.
+- Filtering: filters, applied filters, clear-all behavior.
+- Results: results collection, result type detection (article, page, product), type-specific card metadata.
+- Pagination: paginate object, current page, total pages, next/previous behavior.
+- No-results handling: query echo, recovery links, fallback suggestions, zero-result state.
+- Discovery controls: type filtering, sort switching, predictive search when available.
+
+### Standard page (`page.html` -> `page.json`)
+
+Primary object: `page`
+
+Field groups to cover:
+
+- Identity and content: title, content, handle, url, published_at, template_suffix.
+- Rich text behavior: headings, lists, tables, media embeds, long-form content.
+
+### Contact page (`page.contact.html` -> `page.contact.json`)
+
+Primary objects: `page`, `form` (`contact`)
+
+Field groups to cover:
+
+- Static context: page title/content.
+- Form fields: name, email, phone, order reference, message, consent.
+- Form states: success confirmation, field errors, global errors, preserved input values.
+
+### Password page (`password.html` -> `password.json`)
+
+Primary objects: `shop`, `settings`, `form` (`storefront_password`)
+
+Field groups to cover:
+
+- Brand presentation: logo, store name, message, social links.
+- Access form behavior: password field, submit, validation errors, retry flow.
+- Optional capture: email signup or announcement behaviors when configured.
+
+### Gift card page (`gift_card.html` -> `gift_card.liquid`)
+
+Primary object: `gift_card`
+
+Field groups to cover:
+
+- Value and balance: initial_value, balance, currency formatting.
+- Redemption data: code display strategy, masked/unmasked states.
+- Expiry and status: enabled/expired/disabled presentation.
+- Utility actions: print, Apple/Google wallet actions, QR/barcode presentation.
+
+### 404 page (`404.html` -> `404.json`)
+
+Primary objects: `routes`, optional discovery sources (`search`, featured links)
+
+Field groups to cover:
+
+- Recovery actions: continue shopping, popular collections, search entry.
+- Context clarity: not-found messaging, suggested next steps.
+- Optional telemetry hooks: missing path context where available.
+
+### Home shell (`index.html` -> `index.json`)
+
+Primary objects: global `shop`, `routes`, localization context, shared header/footer needs
+
+Field groups to cover:
+
+- Shared shell data contracts used by future sections.
+- Navigation, cart count indicator, account links, locale/currency selectors.
+- Global announcement and utility surfaces without inventing homepage sections.
 
 ## Source Precedence for `wire`
 
