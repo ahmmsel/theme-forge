@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "init-bilingual-theme",
+  "prompt": "Run /theme-forge init in the current project for a bilingual English and Arabic furniture storefront called Cedar & Loom. Use the slug cedar-loom, support English and Arabic with RTL for Arabic, and create the design-first prototype structure and documentation without adding Shopify Liquid or homepage sections.",
+  "assertions": []
+}

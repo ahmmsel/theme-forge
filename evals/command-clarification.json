@@ -1,0 +1,6 @@
+{
+  "eval_id": 3,
+  "eval_name": "command-clarification",
+  "prompt": "I want to use Theme Forge for a Shopify theme, but I have not said whether to initialize a prototype or audit an existing one. What should I do next? Do not inspect or change files yet.",
+  "assertions": []
+}
