@@ -94,7 +94,8 @@ Use this order:
 5. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
 6. Create only missing directories and files.
 7. Write the settings contract and wiring placeholder using the requested identity.
-8. Summarize created, updated, skipped, and unresolved items.
+8. Create `AGENTS.md` in the project root with agent guidelines and project conventions, then create a `CLAUDE.md` relative symbolic link pointing to `AGENTS.md`.
+9. Summarize created, updated, skipped, and unresolved items.
 
 ```text
 design/
@@ -120,6 +121,9 @@ design/
 docs/
   theme-settings.md
   shopify-wiring.md
+
+AGENTS.md
+CLAUDE.md -> AGENTS.md
 ```
 
 If the project already has an equivalent structure, reuse it and add only missing files. Do not create a framework, build step, component library, or design system.
@@ -135,6 +139,32 @@ Add or update `docs/theme-settings.md` with:
 - A clear marker for unresolved decisions.
 
 Add `docs/shopify-wiring.md` as a placeholder only when it does not exist. It must contain the theme identity, date, source directories, inspection status (`not started`), and a note that `/theme-forge wire` must be run after the prototype is sufficiently complete. If the file already contains a wiring report, do not replace it during `init`.
+
+#### `AGENTS.md` and `CLAUDE.md` Symbolic Link
+
+Create `AGENTS.md` in the project root and create a symbolic link `CLAUDE.md` pointing to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`).
+
+`AGENTS.md` serves as persistent guidance for coding agents working on the theme prototype. It must contain:
+
+1. **Theme Identity & Overview**: Theme name, slug, category, supported languages, RTL direction requirements, and chosen design direction.
+2. **Design-First Architecture & Boundaries**:
+   - Visual prototyping is strictly confined to `design/`.
+   - No Liquid, Shopify API endpoints, build systems, CSS frameworks, or JavaScript libraries in the prototype.
+   - Clean, semantic HTML5, vanilla CSS with CSS custom properties (`--[theme-slug]-*`), and vanilla JS for client interactions.
+   - Bidirectional-safe layout with logical CSS properties (`inline-start`/`inline-end`).
+3. **Workspace Directory Map**: Explanation of `design/` (prototypes, styles, scripts, fixtures), `docs/` (`theme-settings.md`, `shopify-wiring.md`), and root files.
+4. **Theme Forge Commands**:
+   - `/theme-forge init`: Initialize/scaffold prototype workspace.
+   - `/theme-forge wire`: Inspect prototype and generate `docs/shopify-wiring.md` without changing prototype files.
+5. **Modification & Safety Rules**:
+   - Never overwrite user files without confirmation.
+   - Do not modify prototype files during `wire` inspections.
+   - Keep settings documented in `docs/theme-settings.md` synchronized with CSS tokens.
+
+For the `CLAUDE.md` symbolic link:
+- Create it in the project root pointing to `AGENTS.md` via `ln -s AGENTS.md CLAUDE.md` or equivalent filesystem operation.
+- If a symlink or file named `CLAUDE.md` already exists, preserve it if it points to `AGENTS.md` or report it under `skipped` / `updated`.
+- If symbolic link creation fails (e.g., due to filesystem limitations), report it under `unresolved` with manual creation instructions.
 
 Do not create empty HTML files that imply a finished design. If a page prototype does not exist, create a minimal accessible scaffold with a clear `data-prototype-status="scaffold"` marker, or record the missing page in `docs/theme-settings.md` when the user asks for documentation only.
 
@@ -811,6 +841,8 @@ Use one or more of these labels for every mapped item:
 - The design workspace exists or an existing equivalent is documented.
 - All default page prototypes are represented.
 - `docs/theme-settings.md` contains a stable initial global settings contract.
+- `AGENTS.md` is created in the project root with the theme conventions and agent instructions.
+- `CLAUDE.md` is created as a symbolic link pointing to `AGENTS.md`.
 - The prototype remains independent of Liquid, Shopify APIs, and any external frameworks.
 - No homepage sections or blocks were invented prematurely.
 

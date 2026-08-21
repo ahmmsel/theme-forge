@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Run /theme-forge init in the current project for a bilingual English and Arabic furniture storefront called Cedar & Loom. Use the slug cedar-loom, support English and Arabic with RTL for Arabic, and create the design-first prototype structure and documentation without adding Shopify Liquid or homepage sections.",
-      "expected_output": "A preserved or newly created design-first workspace with the default page prototypes represented, docs/theme-settings.md containing the identity and global settings contract, and docs/shopify-wiring.md as a not-started placeholder. The report identifies created, updated, skipped, and unresolved items.",
+      "expected_output": "A preserved or newly created design-first workspace with the default page prototypes represented, docs/theme-settings.md containing the identity and global settings contract, docs/shopify-wiring.md as a not-started placeholder, and AGENTS.md with a CLAUDE.md symbolic link. The report identifies created, updated, skipped, and unresolved items.",
       "files": []
     },
     {
