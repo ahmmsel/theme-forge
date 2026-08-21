@@ -8,11 +8,11 @@ compatibility: "Plain Markdown workflow; requires filesystem access to the selec
 
 Theme Forge is a design-first workflow for building Shopify themes. It keeps visual design independent from Shopify implementation until the design contract is stable, then investigates how the approved design should be wired to Shopify.
 
-The skill is reusable across themes. A theme name, theme slug, category, visual language, and design system may change per project. The workflow and Shopify checks remain consistent.
+The skill is reusable across themes. A theme name, theme slug, category, visual language, and design direction may change per project. The workflow and Shopify checks remain consistent.
 
 ## Portability and Invocation
 
-This is a plain Markdown skill. It does not require a package manager, runtime, build tool, MCP server, or design application.
+This is a plain Markdown skill. It does not require a runtime, build tool, MCP server, or design application. A package manager is only needed when `/theme-forge init` performs companion-skill auto-install.
 
 When the host supports slash commands, use:
 
@@ -31,7 +31,8 @@ Companion skill dependency:
 - Use `frontend-design` whenever the user asks for UI direction, layout systems, typography, color systems, motion, responsive behavior, accessibility polish, or interface critique.
 - Run `frontend-design` before drafting major prototype aesthetics, then apply its guidance while preserving Theme Forge's design-first and Shopify-wiring boundaries.
 - During `/theme-forge init`, if `frontend-design` is missing, install it automatically with `npx skills add https://github.com/anthropics/skills --skill frontend-design`.
-- If auto-install fails, continue init and report the install failure under `unresolved` with the exact command output and a manual retry command.
+- If auto-install fails (missing `npx`, network/auth issues, or permission errors), continue init and report the install failure under `unresolved` with the exact command output and a manual retry command.
+- If the user explicitly says not to install dependencies in the current run, skip auto-install, continue init, and record `frontend-design` as `unresolved`.
 
 ### Command selection
 
@@ -51,6 +52,7 @@ At the start of a command, state the selected project root and the files that wi
 - If a target file already exists, preserve its content and make the smallest compatible update. Report what was preserved and what changed.
 - Do not modify Shopify production files during `wire`.
 - Do not add dependencies, build tools, frameworks, design systems, or remote assets unless explicitly requested.
+- Exception: installing `frontend-design` during `/theme-forge init` is allowed as part of this skill's declared dependency workflow.
 - Do not invent Shopify capabilities. Mark uncertain mappings as `unresolved` and explain what must be verified.
 - At the end of either command, report created files, updated files, skipped files, and unresolved decisions.
 
@@ -63,19 +65,19 @@ Initialize a new theme design workspace at the selected project root.
 Before creating files, ask for:
 
 1. **Theme name** - the merchant-facing name.
-2. **Theme category** - the business or storefront category, such as fashion, beauty, food, furniture, electronics, services, or general commerce.
+2. **Theme category** - the business or storefront category, such as fashion, beauty, food, furniture, electronics, jewelry and accessories, services, or general commerce.
 3. **Theme slug** - derive a lowercase machine-readable slug from the theme name and confirm it if ambiguous.
-4. **Supported languages and text directions** - default to English and RTL support only when requested or relevant.
-5. **Existing project location** - use the current workspace unless the user specifies another directory.
+4. **Supported languages and text directions** - default to English. RTL support is assumed unless explicitly excluded; the design must use logical CSS properties and bidirectional-safe layout so translation readiness is built in, not bolted on later.
+5. **Design direction** - ask the user to describe the visual style or aesthetic direction for the theme, such as Neumorphism, Glassmorphism, Skeuomorphism, Neo-Brutalism, Swiss, Minimalism, Editorial, Y2K, Cyberpunk, Art Deco, or a custom direction. Accept free text input. This defines the visual language, not the technology.
+6. **Existing project location** - use the current workspace unless the user specifies another directory.
 
-Question formatting rule for hosts that use structured question tools:
+Question formatting rules for hosts that use structured question tools:
 
 - Never ask the project location question with only one selectable option.
 - If using options, provide at least two: `Current workspace root` and `Custom path`.
 - If only one practical path is available, ask as free text instead of a single-option chooser.
 - If the user picks `Current workspace root`, run init there without another location prompt.
-
-Do not ask the user to choose a design system unless the project needs one. The skill must remain compatible with Figma, Penpot, Storybook, hand-written HTML, or any other design workflow.
+- The design direction question must always be free text input, never a choice question. The user types their answer or skips with an empty response for "none".
 
 #### Initialization behavior
 
@@ -87,11 +89,12 @@ Use this order:
 
 1. Inspect the project root and identify existing design, docs, assets, Shopify, and configuration directories.
 2. Check whether `frontend-design` is installed and available.
-3. If missing, run `npx skills add https://github.com/anthropics/skills --skill frontend-design` before continuing.
-4. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
-5. Create only missing directories and files.
-6. Write the settings contract and wiring placeholder using the requested identity.
-7. Summarize created, updated, skipped, and unresolved items.
+3. If missing, run `npx skills add https://github.com/anthropics/skills --skill frontend-design` before continuing, unless the user explicitly requested no install for this run.
+4. Re-check companion-skill availability and record success or failure.
+5. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
+6. Create only missing directories and files.
+7. Write the settings contract and wiring placeholder using the requested identity.
+8. Summarize created, updated, skipped, and unresolved items.
 
 ```text
 design/
@@ -124,6 +127,7 @@ If the project already has an equivalent structure, reuse it and add only missin
 Add or update `docs/theme-settings.md` with:
 
 - Theme name, slug, category, supported locales, and direction.
+- Design direction: the chosen visual style and key characteristics (e.g., soft shadows for Neumorphism, glass blur for Glassmorphism).
 - The rule that global settings are designed before homepage sections and blocks.
 - The selected CSS token naming convention: `--[theme-slug]-*` or an existing project convention.
 - The approved page list.
@@ -141,6 +145,8 @@ Do not build homepage sections or blocks during initialization. `design/index.ht
 The prototype must use:
 
 - Plain HTML files, one shared CSS file, and one shared JavaScript file.
+- Plain CSS only — no CSS frameworks, preprocessors, or utility libraries (no Tailwind, Bootstrap, etc.).
+- Vanilla JavaScript only — no JS frameworks, libraries, or build tools (no React, Alpine, GSAP, etc.).
 - Static fixtures that resemble future Shopify data but contain no Liquid or Shopify API calls.
 - Stable semantic classes and `data-*` hooks that can survive Liquid conversion.
 - CSS custom properties for global visual roles.
@@ -148,9 +154,25 @@ The prototype must use:
 - Progressive enhancement: important content and forms remain understandable without JavaScript.
 - Responsive, keyboard, focus-visible, reduced-motion, empty, error, loading, unavailable, and missing-media states.
 - Labels as well as clear placeholders in every prototype form.
-- Logical CSS properties and RTL-safe layout when RTL is in scope.
+- Logical CSS properties and bidirectional-safe layout by default. The design must be structurally ready for RTL via `inline-start`/`inline-end` properties, mirrored icons where needed, and no hard-coded left/right assumptions. This is a design-time concern, not a translation concern — do not add translated content or alternate layouts.
 
-Do not hard-code a particular aesthetic. The category can influence sample content and fixture shape, but it must not force colors, fonts, layout, or a design system.
+Do not hard-code a particular aesthetic. The category can influence sample content and fixture shape, but it must not force colors, fonts, layout, or design beyond what the user specified.
+
+The chosen design direction shapes the visual language only:
+
+- Neumorphism: soft extruded shadows, subtle depth, muted color palettes.
+- Glassmorphism: frosted glass blur, translucency, layered depth.
+- Skeuomorphism: realistic textures, lighting, dimensional detail.
+- Neo-Brutalism: bold borders, raw typography, high contrast, visible structure.
+- Swiss: grid-driven, clean typography, restrained hierarchy.
+- Minimalism: whitespace-forward, minimal chrome, restrained decoration.
+- Editorial: strong typographic hierarchy, magazine-inspired layout.
+- Y2K: glossy surfaces, bold gradients, playful maximalism.
+- Cyberpunk: neon accents, dark backgrounds, glitch/tech aesthetics.
+- Art Deco: geometric patterns, metallic accents, ornamental detail.
+- Custom: the user defines the direction; capture it in `docs/theme-settings.md`.
+
+Record the chosen direction in `docs/theme-settings.md` under a Design Direction section with key visual characteristics. Do not install or reference any framework, library, or build tool.
 
 ## Global Settings Contract
 
@@ -176,11 +198,11 @@ These are recommendations, not mandatory categories. Add, merge, or rename group
 - **Brand:** logo, alternate logo, logo width, favicon, social links.
 - **Color:** reusable color schemes and semantic roles such as background, text, muted text, borders, links, icons, buttons, badges, success, warning, and error.
 - **Typography:** display, heading, body, and accent roles, each with font, scale, line height, letter spacing, and case where Shopify supports the control.
-- **Layout:** page width, content gutters, spacing scale, media ratios, container variants, and corner-radius preset.
+- **Layout:** page width, content gutters, spacing scale, media ratios, container variants, corner-radius preset, and bidirectional-safe spacing/margins.
 - **Buttons and forms:** button style, arrow behavior, field style, focus-ring style, and density where the merchant needs control.
 - **Cards and media:** product, collection, and article card defaults; image ratio, fit, metadata, badges, swatches, and hover behavior.
 - **Cart and discovery:** cart page, cart drawer, cart mode, drawer behavior, cart fields, shipping progress, search modal, predictive search, quick actions, pagination, and recently viewed behavior.
-- **Navigation and behavior:** sticky and overlay header behavior, menus, selectors, account access, breadcrumbs, back-to-top, external links, reduced motion, and prose treatment.
+- **Navigation and behavior:** sticky and overlay header behavior, menus, selectors, account access, breadcrumbs, back-to-top, external links, reduced motion, bidirectional layout, and prose treatment.
 
 Do not expose implementation details as settings merely because they are technically configurable. A setting belongs in the global contract only when a merchant can understand its outcome and reasonably needs to change it across the storefront.
 
@@ -281,53 +303,51 @@ Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
-   "all_products_count": 10,
-   "all_tags": [
-      "Burning",
-      "dried",
-      "extracts",
-      "fresh",
-      "ingredients",
-      "plant",
-      "supplies"
-   ],
-   "all_types": [
-      "Animals & Pet Supplies",
-      "Baking Flavors & Extracts",
-      "Cooking & Baking Ingredients",
-      "Dried Flowers",
-      "Fruits & Vegetables",
-      "Seasonings & Spices",
-      "Water"
-   ],
-   "all_vendors": [
-      "Clover's Apothecary",
-      "Polina's Potent Potions",
-      "Ted's Apothecary Supply"
-   ],
-   "current_type": null,
-   "current_vendor": null,
-   "default_sort_by": "created-ascending",
-   "description": "Brew your own potions at home using our fresh, ethically-sourced ingredients.",
-   "featured_image": {},
-   "filters": {},
-   "handle": "ingredients",
-   "id": 266168401985,
-   "image": {},
-   "metafields": {},
-   "next_product": null,
-   "previous_product": null,
-   "products": {},
-   "products_count": 1,
-   "published_at": "2022-04-19 09:52:18 -0400",
-   "sort_by": "",
-   "sort_options": [],
-   "tags": [
-      "Burning"
-   ],
-   "template_suffix": "eight-products-per-page",
-   "title": "Ingredients",
-   "url": {}
+  "all_products_count": 10,
+  "all_tags": [
+    "Burning",
+    "dried",
+    "extracts",
+    "fresh",
+    "ingredients",
+    "plant",
+    "supplies"
+  ],
+  "all_types": [
+    "Animals & Pet Supplies",
+    "Baking Flavors & Extracts",
+    "Cooking & Baking Ingredients",
+    "Dried Flowers",
+    "Fruits & Vegetables",
+    "Seasonings & Spices",
+    "Water"
+  ],
+  "all_vendors": [
+    "Clover's Apothecary",
+    "Polina's Potent Potions",
+    "Ted's Apothecary Supply"
+  ],
+  "current_type": null,
+  "current_vendor": null,
+  "default_sort_by": "created-ascending",
+  "description": "Brew your own potions at home using our fresh, ethically-sourced ingredients.",
+  "featured_image": {},
+  "filters": {},
+  "handle": "ingredients",
+  "id": 266168401985,
+  "image": {},
+  "metafields": {},
+  "next_product": null,
+  "previous_product": null,
+  "products": {},
+  "products_count": 1,
+  "published_at": "2022-04-19 09:52:18 -0400",
+  "sort_by": "",
+  "sort_options": [],
+  "tags": ["Burning"],
+  "template_suffix": "eight-products-per-page",
+  "title": "Ingredients",
+  "url": {}
 }
 ```
 
@@ -584,11 +604,7 @@ Use this baseline field checklist in fixtures and design mapping:
   "sort_by": "relevance",
   "sort_options": [],
   "terms": "potion",
-  "types": [
-    "article",
-    "page",
-    "product"
-  ]
+  "types": ["article", "page", "product"]
 }
 ```
 
@@ -744,7 +760,7 @@ Write `docs/shopify-wiring.md` with these sections:
 9. **Risks and decisions**
    - Shopify schema limitations.
    - Unsupported or app-dependent behavior.
-   - Localization and RTL risks.
+   - Localization and bidirectional layout risks (hard-coded left/right, directional icons, asymmetric spacing).
    - Accessibility and performance risks.
    - Conflicts between the prototype and Shopify's data model.
 
@@ -791,10 +807,11 @@ Use one or more of these labels for every mapped item:
 `/theme-forge init` is complete when:
 
 - The requested theme identity and category are recorded.
+- The design direction is documented with key visual characteristics.
 - The design workspace exists or an existing equivalent is documented.
 - All default page prototypes are represented.
 - `docs/theme-settings.md` contains a stable initial global settings contract.
-- The prototype remains independent of Liquid, Shopify APIs, and any specific design system tool.
+- The prototype remains independent of Liquid, Shopify APIs, and any external frameworks.
 - No homepage sections or blocks were invented prematurely.
 
 `/theme-forge wire` is complete when:
