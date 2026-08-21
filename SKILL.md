@@ -50,7 +50,7 @@ At the start of a command, state the selected project root and the files that wi
 
 ### `/theme-forge init`
 
-Initialize a new theme design workspace.
+Initialize a new theme design workspace at the selected project root.
 
 Before creating files, ask for:
 
@@ -60,11 +60,20 @@ Before creating files, ask for:
 4. **Supported languages and text directions** - default to English and RTL support only when requested or relevant.
 5. **Existing project location** - use the current workspace unless the user specifies another directory.
 
+Question formatting rule for hosts that use structured question tools:
+
+- Never ask the project location question with only one selectable option.
+- If using options, provide at least two: `Current workspace root` and `Custom path`.
+- If only one practical path is available, ask as free text instead of a single-option chooser.
+- If the user picks `Current workspace root`, run init there without another location prompt.
+
 Do not ask the user to choose a design system unless the project needs one. The skill must remain compatible with Figma, Penpot, Storybook, hand-written HTML, or any other design workflow.
 
 #### Initialization behavior
 
 Create the smallest useful design-first structure. Preserve existing user files and never overwrite an existing file without inspecting it first.
+
+Initialization root rule: run `/theme-forge init` against the selected project root and create or update child paths from there. Do not treat `design/` as the project root.
 
 Use this order:
 
@@ -82,7 +91,7 @@ design/
   blog.html
   cart.html
   collection.html
-  list-collections.html
+   collections-list.html
   page.html
   page.contact.html
   password.html
@@ -175,7 +184,7 @@ The initialization must account for these Shopify page experiences:
 | `blog.html`             | `blog.json`             | Blog listing, pagination/load-more, empty state                             |
 | `cart.html`             | `cart.json`             | Lines, quantities, removal, notes, discounts, totals, checkout, empty state |
 | `collection.html`       | `collection.json`       | Collection header, product listing, filtering, sorting, empty state         |
-| `list-collections.html` | `list-collections.json` | Collection directory, card defaults, pagination/empty state                 |
+| `collections-list.html` | `collections-list.json` | Collection directory, card defaults, pagination/empty state                 |
 | `index.html`            | `index.json`            | Shared shell only until homepage sections are designed                      |
 | `page.html`             | `page.json`             | Standard page title and rich content                                        |
 | `page.contact.html`     | `page.contact.json`     | Contact fields, consent, validation, and success state                      |
