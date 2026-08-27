@@ -1,12 +1,12 @@
 ---
 name: theme-forge
-description: "Use this skill whenever a user is starting, planning, auditing, or wiring a Shopify theme whose visual design is being developed outside Shopify, including requests to create a theme prototype, define merchant-facing settings, map HTML/CSS/JavaScript to Liquid, or produce a Shopify wiring map. Run /theme-forge init to create a theme-neutral design workspace, or /theme-forge wire to inspect an existing prototype and generate a map for wiring global theme settings, sections, blocks, and templates in docs/shopify-wiring.md. The wire command strictly produces this wiring map and does not perform implementation or prototype modifications."
+description: "Use this skill whenever a user is starting, planning, auditing, wiring, or implementing a Shopify theme whose visual design is developed outside Shopify. Run /theme-forge init to scaffold a prototype workspace, /theme-forge wire [target] to generate a wiring map for global settings, sections, blocks, or templates in docs/shopify-wiring.md, and /theme-forge forge [target] (or /theme-forge implement [target]) to execute the wiring map and generate production Shopify Liquid, JSON schemas, and templates."
 compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Self-contained with zero runtime, build tool, framework, package manager, or external skill dependencies. No Shopify credentials required."
 ---
 
 # Theme Forge
 
-Theme Forge is a design-first workflow for building Shopify themes. It keeps visual design independent from Shopify implementation until the design contract is stable, then investigates how the approved design should be wired to Shopify.
+Theme Forge is a design-first workflow for building Shopify themes. It keeps visual design independent from Shopify implementation until the design contract is stable, then generates a wiring map and implements the approved design as production Shopify theme code.
 
 The skill is reusable across themes. A theme name, theme slug, category, visual language, and design direction may change per project. The workflow and Shopify checks remain consistent.
 
@@ -18,10 +18,24 @@ When the host supports slash commands, use:
 
 ```text
 /theme-forge init
-/theme-forge wire
+/theme-forge wire [target]
+/theme-forge forge [target]
 ```
 
-When the host does not support slash commands, interpret `init` and `wire` as the first user-provided argument to the skill. If no command is provided, explain the two commands and ask which one to run. Do not silently choose `init` or `wire`.
+*(Note: `/theme-forge implement [target]` is supported as an alias for `/theme-forge forge`.)*
+
+Target scopes for `wire` and `forge`:
+- `all` (default): Entire theme (global settings, shell, all sections, blocks, and templates).
+- `settings` (or `global`): Global theme settings (`config/settings_schema.json`), `color_scheme_group` definitions, and root CSS tokens.
+- `header-footer` (or `shell`): Global header & footer sections and section groups (`sections/header-group.json`, `sections/footer-group.json`, `sections/header.liquid`, `sections/footer.liquid`).
+- `product`: Product page section, blocks, and `templates/product.json`.
+- `collection`: Collection page section, filters, sorting, and `templates/collection.json`.
+- `cart`: Cart page section, AJAX cart drawer section, and `templates/cart.json`.
+- `blog`: Blog and article sections and `templates/blog.json`, `templates/article.json`.
+- `search`: Search section and `templates/search.json`.
+- `pages`: Standard page, contact, 404, password, and gift card templates/sections.
+
+When the host does not support slash commands, interpret `init`, `wire`, or `forge` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
 
 The skill must work from a project directory, not only from the directory where the skill file is installed. Resolve all project paths relative to the user's selected project root.
 
@@ -33,13 +47,14 @@ The skill must work from a project directory, not only from the directory where 
 
 ### Command selection
 
-1. Read the user's requested command from the first argument or from the request context.
-2. If it is `init`, follow only the initialization workflow.
-3. If it is `wire`, follow only the wiring investigation workflow.
-4. If no command is present, explain both commands and ask which one to run; do not inspect or modify project files yet.
-5. If the command is unknown, show the two valid commands and ask the user to choose.
+1. Read the user's requested command and optional target scope from the arguments or context.
+2. If it is `init`, follow the initialization workflow.
+3. If it is `wire`, follow the wiring investigation workflow for the requested target (defaulting to `all`).
+4. If it is `forge` or `implement`, follow the theme implementation workflow for the requested target (defaulting to `all`).
+5. If no command is present, explain the valid commands and ask which one to run; do not inspect or modify project files yet.
+6. If the command is unknown, show the valid commands and ask the user to choose.
 
-At the start of a command, state the selected project root and the files that will be inspected or created. At completion, report four separate lists: created, updated, skipped, and unresolved. Keep the report factual and distinguish observations from recommendations.
+At the start of a command, state the selected project root, command, target scope, and the files that will be inspected or created. At completion, report four separate lists: created, updated, skipped, and unresolved. Keep the report factual and distinguish observations from recommendations.
 
 ## Safety and Change Policy
 
@@ -47,11 +62,11 @@ At the start of a command, state the selected project root and the files that wi
 - Never delete, reset, or overwrite user-authored files without explicit confirmation.
 - Create missing directories and files only when they are part of the requested command output.
 - If a target file already exists, preserve its content and make the smallest compatible update. Report what was preserved and what changed.
-- Do not modify Shopify production files during `wire`.
-- The `wire` command is strictly limited to generating the wiring map (mapping global theme settings, sections, blocks, and templates) in `docs/shopify-wiring.md`; do not perform code implementation, Liquid file generation, or prototype modifications.
+- The `wire` command is strictly limited to generating or updating the wiring map in `docs/shopify-wiring.md`; it does NOT modify prototype files or write Shopify production code.
+- The `forge` (or `implement`) command implements the blueprint from `docs/shopify-wiring.md` into Shopify theme production files (`config/`, `sections/`, `blocks/`, `snippets/`, `templates/`, `layout/`); it does NOT modify files in `design/` unless the user explicitly asks for prototype changes.
 - Do not add dependencies, build tools, frameworks, design systems, or remote assets unless explicitly requested.
 - Do not invent Shopify capabilities. Mark uncertain mappings as `unresolved` and explain what must be verified.
-- At the end of either command, report created files, updated files, skipped files, and unresolved decisions.
+- At the end of any command, report created files, updated files, skipped files, and unresolved decisions.
 
 ## Commands
 
@@ -169,14 +184,15 @@ Create `AGENTS.md` in the project root if it does not exist, or update an existi
    - Shopify production directories (when co-located in a Shopify theme): `sections/`, `snippets/`, `templates/`, `layout/`, `config/`, `assets/`, `locales/`.
 4. **Theme Forge Commands**:
    - `/theme-forge init`: Initialize or update prototype workspace and global settings contract.
-   - `/theme-forge wire`: Inspect prototype and generate the wiring map in `docs/shopify-wiring.md` (mapping global theme settings, sections, blocks, and templates) without modifying prototype files or writing theme code.
+   - `/theme-forge wire [target]`: Inspect prototype and generate the wiring map in `docs/shopify-wiring.md` for all or a specific target (`settings`, `header-footer`, `product`, `collection`, `cart`, `blog`, `search`, `pages`).
+   - `/theme-forge forge [target]` (or `/theme-forge implement [target]`): Implement production Shopify theme files (`config/`, `sections/`, `blocks/`, `templates/`, `layout/`) from the wiring blueprint for all or a targeted component.
 5. **Shopify Wiring & Implementation Workflow (When Requested by User)**:
-   - When the user asks to wire or implement the Shopify theme based on the prototype:
+   - When the user asks to wire or implement the Shopify theme (or runs `/theme-forge forge`):
      - Consult `docs/shopify-wiring.md` as the authoritative implementation guide.
      - Implement global theme settings in `config/settings_schema.json` using the mapped IDs, types, and `color_scheme_group` roles.
      - Build Liquid sections in `sections/*.liquid` and blocks conforming to the mapped schemas and data sources in `docs/shopify-wiring.md`.
      - Implement JSON templates in `templates/*.json` following the page-to-template map and section composition.
-     - Do not modify files in `design/` during theme wiring unless the user explicitly requests changes to the visual prototype.
+     - Do not modify files in `design/` during theme implementation unless the user explicitly requests changes to the visual prototype.
 6. **Modification & Safety Rules**:
    - Never overwrite user files without confirmation.
    - Do not modify prototype files or write Shopify theme code during `wire` inspections; strictly generate the wiring map.
@@ -518,6 +534,53 @@ Field groups to cover:
 
 Primary objects: `collections`, `collection` items, optional `paginate`
 
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+[
+  {
+    "id": 266168401985,
+    "handle": "potions",
+    "title": "Potions & Elixirs",
+    "description": "Handcrafted magical brews for every affliction and adventure.",
+    "products_count": 12,
+    "url": "/collections/potions",
+    "image": {
+      "src": "https://cdn.shopify.com/s/files/1/0000/0001/collections/potions.jpg",
+      "alt": "Row of glass potion vials",
+      "width": 1200,
+      "height": 800
+    },
+    "featured_image": {
+      "src": "https://cdn.shopify.com/s/files/1/0000/0001/collections/potions.jpg",
+      "alt": "Row of glass potion vials",
+      "width": 1200,
+      "height": 800
+    }
+  },
+  {
+    "id": 266168434753,
+    "handle": "ingredients",
+    "title": "Raw Ingredients",
+    "description": "Ethically sourced herbs, minerals, and dried botanicals.",
+    "products_count": 8,
+    "url": "/collections/ingredients",
+    "image": {
+      "src": "https://cdn.shopify.com/s/files/1/0000/0001/collections/ingredients.jpg",
+      "alt": "Dried herbs and crystals in wooden bowls",
+      "width": 1200,
+      "height": 800
+    },
+    "featured_image": {
+      "src": "https://cdn.shopify.com/s/files/1/0000/0001/collections/ingredients.jpg",
+      "alt": "Dried herbs and crystals in wooden bowls",
+      "width": 1200,
+      "height": 800
+    }
+  }
+]
+```
+
 Field groups to cover:
 
 - Directory card basics: title, description excerpt, image, products_count, url, handle.
@@ -779,6 +842,21 @@ Field groups to cover:
 
 Primary object: `page`
 
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "author": "Polina Waters",
+  "content": "<p>Founded in 1842, our apothecary brings time-tested botanical remedies and sustainably harvested ingredients directly to modern homes.</p><h2>Our Philosophy</h2><p>Every formula begins with respect for nature, small-batch brewing, and uncompromising purity standards.</p>",
+  "handle": "about-us",
+  "id": 89234857217,
+  "published_at": "2023-01-15 10:00:00 -0400",
+  "template_suffix": "",
+  "title": "About Us",
+  "url": "/pages/about-us"
+}
+```
+
 Field groups to cover:
 
 - Identity and content: title, content, handle, url, published_at, template_suffix.
@@ -788,6 +866,32 @@ Field groups to cover:
 
 Primary objects: `page`, `form` (`contact`)
 
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "page": {
+    "id": 89234857218,
+    "handle": "contact-us",
+    "title": "Contact Us",
+    "content": "<p>Have a question about our products or custom orders? Send us a message and we will reply within one business day.</p>",
+    "url": "/pages/contact-us"
+  },
+  "form": {
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "phone": "+1 (555) 234-5678",
+    "body": "I would like to inquire about bulk ordering.",
+    "posted_successfully?": false,
+    "errors": {
+      "messages": {
+        "email": ["Please enter a valid email address."]
+      }
+    }
+  }
+}
+```
+
 Field groups to cover:
 
 - Static context: page title/content.
@@ -796,7 +900,31 @@ Field groups to cover:
 
 ### Password page (`password.html` -> `password.json`)
 
-Primary objects: `shop`, `settings`, `form` (`storefront_password`)
+Primary objects: `shop`, `settings`, `form` (`storefront_password`), `form` (`customer`)
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "shop": {
+    "name": "Cedar & Loom",
+    "password_message": "Opening soon! We are putting the final touches on our new seasonal collection."
+  },
+  "password_form": {
+    "posted_successfully?": false,
+    "errors": {
+      "messages": {
+        "password": ["Incorrect password. Please try again."]
+      }
+    }
+  },
+  "newsletter_form": {
+    "email": "",
+    "posted_successfully?": false,
+    "errors": {}
+  }
+}
+```
 
 Field groups to cover:
 
@@ -807,6 +935,33 @@ Field groups to cover:
 ### Gift card page (`gift_card.html` -> `gift_card.liquid`)
 
 Primary object: `gift_card`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "balance": "100.00",
+  "code": "ABCD 1234 EFGH 5678",
+  "currency": "USD",
+  "customer": {
+    "name": "Alex Mercer",
+    "email": "alex@example.com"
+  },
+  "disabled": false,
+  "enabled": true,
+  "expired": false,
+  "expires_on": null,
+  "id": 58392019482,
+  "initial_value": "100.00",
+  "masked_code": "•••• •••• •••• 5678",
+  "qr_identifier": "58392019482",
+  "recipient": {
+    "name": "Sam Taylor",
+    "email": "sam@example.com",
+    "message": "Enjoy finding something special for your home!"
+  }
+}
+```
 
 Field groups to cover:
 
@@ -819,6 +974,25 @@ Field groups to cover:
 
 Primary objects: `routes`, optional discovery sources (`search`, featured links)
 
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "routes": {
+    "root_url": "/",
+    "all_products_collection_url": "/collections/all",
+    "search_url": "/search",
+    "cart_url": "/cart",
+    "account_url": "/account"
+  },
+  "recovery_links": [
+    { "title": "Bestsellers", "url": "/collections/bestsellers" },
+    { "title": "New Arrivals", "url": "/collections/new-arrivals" },
+    { "title": "Contact Support", "url": "/pages/contact-us" }
+  ]
+}
+```
+
 Field groups to cover:
 
 - Recovery actions: continue shopping, popular collections, search entry.
@@ -827,7 +1001,78 @@ Field groups to cover:
 
 ### Home shell (`index.html` -> `index.json`)
 
-Primary objects: global `shop`, `routes`, localization context, shared header/footer needs
+Primary objects: global `shop`, `routes`, `linklists`, `localization`
+
+Use this baseline field checklist in fixtures and design mapping:
+
+```json
+{
+  "shop": {
+    "name": "Cedar & Loom",
+    "description": "Modern handcrafted furniture and timeless home goods.",
+    "money_format": "${{amount}}",
+    "currency": "USD",
+    "domain": "cedar-loom.myshopify.com",
+    "email": "care@cedarandloom.com"
+  },
+  "routes": {
+    "root_url": "/",
+    "all_products_collection_url": "/collections/all",
+    "search_url": "/search",
+    "cart_url": "/cart",
+    "cart_add_url": "/cart/add",
+    "cart_change_url": "/cart/change",
+    "cart_clear_url": "/cart/clear",
+    "predictive_search_url": "/search/suggest",
+    "account_url": "/account",
+    "account_login_url": "/account/login",
+    "account_logout_url": "/account/logout",
+    "account_register_url": "/account/register"
+  },
+  "linklists": {
+    "main-menu": {
+      "title": "Main menu",
+      "links": [
+        { "title": "Home", "url": "/", "active": true, "links": [] },
+        {
+          "title": "Shop",
+          "url": "/collections/all",
+          "active": false,
+          "links": [
+            { "title": "Seating", "url": "/collections/seating", "links": [] },
+            { "title": "Tables", "url": "/collections/tables", "links": [] },
+            { "title": "Lighting", "url": "/collections/lighting", "links": [] }
+          ]
+        },
+        { "title": "Stories", "url": "/blogs/journal", "active": false, "links": [] },
+        { "title": "About", "url": "/pages/about-us", "active": false, "links": [] }
+      ]
+    },
+    "footer": {
+      "title": "Footer menu",
+      "links": [
+        { "title": "Privacy Policy", "url": "/policies/privacy-policy" },
+        { "title": "Terms of Service", "url": "/policies/terms-of-service" },
+        { "title": "Shipping & Returns", "url": "/pages/shipping-returns" },
+        { "title": "Contact Us", "url": "/pages/contact-us" }
+      ]
+    }
+  },
+  "localization": {
+    "available_countries": [
+      { "name": "United States", "iso_code": "US", "currency": { "iso_code": "USD", "symbol": "$" } },
+      { "name": "United Kingdom", "iso_code": "GB", "currency": { "iso_code": "GBP", "symbol": "£" } },
+      { "name": "United Arab Emirates", "iso_code": "AE", "currency": { "iso_code": "AED", "symbol": "د.إ" } }
+    ],
+    "available_languages": [
+      { "name": "English", "iso_code": "en", "endonym_name": "English" },
+      { "name": "Arabic", "iso_code": "ar", "endonym_name": "العربية" }
+    ],
+    "country": { "name": "United States", "iso_code": "US", "currency": { "iso_code": "USD", "symbol": "$" } },
+    "language": { "name": "English", "iso_code": "en", "endonym_name": "English" }
+  }
+}
+```
 
 Field groups to cover:
 
@@ -847,35 +1092,37 @@ When sources disagree, use this precedence and record the conflict:
 
 The report must distinguish observed facts from recommendations. Use `observed`, `inferred`, or `proposed` in the confidence field rather than presenting an inference as an existing implementation.
 
-## `/theme-forge wire`
+## `/theme-forge wire [target]`
 
-Generate or update `docs/shopify-wiring.md` from the current codebase. The `/theme-forge wire` command serves one dedicated purpose: **produce a wiring map that maps global theme settings, sections, blocks, and templates to Shopify**. It is strictly a mapping and specification document. Do not do more than this: do not perform code implementation, do not create or modify Liquid/Shopify files, and do not modify prototype files.
+Generate or update `docs/shopify-wiring.md` from the current codebase for all or a specific target (`all`, `settings`, `header-footer`, `product`, `collection`, `cart`, `blog`, `search`, `pages`).
+
+The `/theme-forge wire` command serves one dedicated purpose: **produce a wiring map that maps global theme settings, sections, blocks, and templates to Shopify**. It is strictly a mapping and specification document. Do not do more than this: do not perform code implementation, do not create or modify Liquid/Shopify files, and do not modify prototype files.
 
 Before writing, inspect the project and identify:
 
 - Global settings documented in `docs/theme-settings.md` and CSS custom properties (`--[theme-slug]-*`) in `design/styles.css`.
 - Color schemes, roles, and tokens.
-- HTML pages in `design/` and their layout structure.
+- HTML pages in `design/` and their layout structure (with header/footer in `design/index.html`).
 - Prototype components, sections, and blocks.
 - Existing Liquid files, Shopify schemas, templates, snippets, or fixtures if present.
 
 ### Wiring document requirements
 
-Write `docs/shopify-wiring.md` with these focused sections:
+Write or update `docs/shopify-wiring.md` with these focused sections:
 
 1. **Project identity and inspection scope**
-   - Theme name, slug, category, inspected paths, and inspection date.
+   - Theme name, slug, category, inspected paths, targeted scope, and inspection date.
 
-2. **Global theme settings wiring map**
+2. **Global theme settings wiring map** (when target is `all` or `settings`)
    - Map every global setting and CSS token (`--[theme-slug]-*`) to `config/settings_schema.json`.
    - Proposed schema category, setting ID (`snake_case`), Shopify control type, default value, and CSS custom property output.
    - Proposed `color_scheme_group` definition mapping semantic color roles to tokens across default schemes (Primary, Secondary, Contrast).
 
-3. **Sections and blocks wiring map**
+3. **Sections and blocks wiring map** (when target is `all`, `header-footer`, `product`, `collection`, `cart`, `blog`, `search`, or `pages`)
    - Map prototype UI components, sections, and blocks to Shopify Liquid sections (`sections/*.liquid`) and blocks.
    - Proposed section/block settings, presets, block types, data sources, and shared snippet dependencies.
 
-4. **Page-to-template wiring map**
+4. **Page-to-template wiring map** (when target is `all` or a specific page/template)
    - Map each default prototype page (`index.html`, `product.html`, `collection.html`, `cart.html`, etc.) to its Shopify JSON template target (`templates/*.json`).
    - Required Liquid objects, forms, routes, and template section structure.
 
@@ -899,11 +1146,65 @@ Use one or more of these labels for every mapped item:
 ### Rules for wire command
 
 - The wire command must ONLY produce the wiring map for global theme settings, sections, blocks, and templates. Do not do more than this.
-- Do not perform code implementation or generate Liquid template files.
+- Do not perform code implementation or generate Liquid template files during `wire`.
 - Do not modify prototype files in `design/` during `/theme-forge wire`.
 - Do not convert every CSS token into a merchant setting; preserve internal code-level tokens where exposing them adds noise.
 - Route all colors through the `color_scheme_group` rather than standalone per-section color pickers.
 - Mark uncertain mappings as `unresolved`.
+
+---
+
+## `/theme-forge forge [target]` (Alias: `/theme-forge implement [target]`)
+
+Execute the wiring map documented in `docs/shopify-wiring.md` to generate or update production Shopify theme files for the specified target (or `all`).
+
+### Target Scopes & Implementation Behavior:
+
+1. **`settings` (or `global`)**:
+   - Generates/updates `config/settings_schema.json` with the nine canonical settings groups, control types, defaults, and `color_scheme_group` definition.
+   - Generates/updates root and scoped color scheme CSS variables in `layout/theme.liquid` or `assets/theme.css`.
+
+2. **`header-footer` (or `shell`)**:
+   - Generates `sections/header.liquid` and `sections/footer.liquid` based on the shared shell in `design/index.html`.
+   - Generates `sections/header-group.json` and `sections/footer-group.json` (or updates `layout/theme.liquid` section calls).
+
+3. **`product`**:
+   - Generates `sections/main-product.liquid` (media gallery, variant pickers, purchase form, price) and associated blocks.
+   - Generates `templates/product.json` with the section order and default block configuration.
+
+4. **`collection`**:
+   - Generates `sections/main-collection.liquid` with product grid, storefront filtering (`collection.filters`), sorting, and pagination.
+   - Generates `templates/collection.json` and `templates/collections-list.json`.
+
+5. **`cart`**:
+   - Generates `sections/main-cart.liquid` (line items, quantity adjusters, discount notes, checkout).
+   - Generates `sections/cart-drawer.liquid` for AJAX drawer interactions.
+   - Generates `templates/cart.json`.
+
+6. **`blog`**:
+   - Generates `sections/main-blog.liquid`, `sections/main-article.liquid`, and `templates/blog.json`, `templates/article.json`.
+
+7. **`search`**:
+   - Generates `sections/main-search.liquid` supporting multi-type result cards (products, articles, pages) and `templates/search.json`.
+
+8. **`pages`**:
+   - Generates `sections/main-page.liquid`, `sections/contact-form.liquid`, `templates/page.json`, `templates/page.contact.json`, `templates/404.json`, `templates/password.json`, and `templates/gift_card.liquid`.
+
+9. **`all` (default)**:
+   - Implements all components above in proper dependency order: `settings` foundation -> `header-footer` shell -> commerce templates (`product`, `collection`, `cart`) -> supporting templates (`blog`, `search`, `pages`).
+
+### Rules for forge (implement) command:
+
+- Always inspect and consult `docs/shopify-wiring.md` as the blueprint before generating theme files. If `docs/shopify-wiring.md` does not exist or lacks mapping for the target, run the `wire` step first.
+- Strictly adhere to modern Shopify theme standards:
+  - Valid `{% schema %}` JSON schema for all sections and blocks.
+  - Use `image_url` filter (never deprecated `img_url`).
+  - Use semantic HTML tags and CSS custom properties matching `--[theme-slug]-*`.
+  - Wrap user-facing copy in translation tags `{{ 'key' | t }}` and populate `locales/en.default.json`.
+- Do not modify or delete prototype files in `design/` during `forge`.
+- Report all created, updated, skipped, and unresolved files upon completion.
+
+---
 
 ## Completion Criteria
 
@@ -924,8 +1225,15 @@ Use one or more of these labels for every mapped item:
 
 `/theme-forge wire` is complete when:
 
-- `docs/shopify-wiring.md` contains a complete wiring map for global theme settings, sections, blocks, and templates based on the inspected codebase.
+- `docs/shopify-wiring.md` contains a complete wiring map for the targeted scope (or global theme settings, sections, blocks, and templates) based on the inspected codebase.
 - Global theme settings and CSS tokens are mapped to `config/settings_schema.json` and color scheme definitions.
 - Prototype sections, blocks, and default pages are mapped to Shopify equivalents with schema and data bindings.
 - Unresolved or ambiguous items are explicitly documented.
 - No prototype or Shopify production files were modified.
+
+`/theme-forge forge` (or `/theme-forge implement`) is complete when:
+
+- The targeted Shopify theme production files (`config/settings_schema.json`, `sections/*.liquid`, `templates/*.json`, `layout/theme.liquid`, `locales/*.json`) are created or updated adhering to `docs/shopify-wiring.md`.
+- All generated section schemas contain valid JSON and presets.
+- CSS tokens and color schemes are properly wired to `settings` and `layout/theme.liquid`.
+- Prototype files in `design/` remain preserved and unmodified.

@@ -2,10 +2,11 @@
 
 Theme Forge is a design-first workflow skill for Shopify themes designed outside Shopify.
 
-It separates visual prototyping from Shopify implementation by providing two commands:
+It separates visual prototyping from Shopify implementation by providing three core commands:
 
-- `/theme-forge init` creates a theme-neutral prototype workspace and an initial merchant-facing settings contract.
-- `/theme-forge wire` audits an existing prototype and produces a wiring map for global theme settings, sections, blocks, and templates in `docs/shopify-wiring.md`.
+- `/theme-forge init` scaffolds a theme-neutral prototype workspace, settings contract, and `.shopifyignore`.
+- `/theme-forge wire [target]` audits an existing prototype and produces a wiring blueprint in `docs/shopify-wiring.md` for global settings, sections, blocks, or specific pages (`product`, `collection`, `cart`, etc.).
+- `/theme-forge forge [target]` (or `/theme-forge implement [target]`) implements the wiring map into production Shopify theme files (`config/`, `sections/`, `templates/`, `layout/`).
 
 The workflow uses plain Markdown instructions and keeps prototypes independent of Liquid, Shopify APIs, frameworks, and design tools.
 

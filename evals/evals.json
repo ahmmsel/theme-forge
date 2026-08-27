@@ -16,7 +16,7 @@
     {
       "id": 3,
       "prompt": "I want to use Theme Forge for a Shopify theme, but I have not said whether to initialize a prototype or audit an existing one. What should I do next? Do not inspect or change files yet.",
-      "expected_output": "A concise explanation of /theme-forge init and /theme-forge wire, followed by a question asking the user to choose one. No files are created or modified.",
+      "expected_output": "A concise explanation of /theme-forge init, /theme-forge wire, and /theme-forge forge, followed by a question asking the user to choose one. No files are created or modified.",
       "files": []
     }
   ]
