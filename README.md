@@ -6,6 +6,7 @@ It focuses purely on developing standalone frontend prototypes, design tokens, a
 
 - `/theme-forge init` scaffolds a standalone design prototype workspace (`design/`), 9-category global settings contract (`docs/theme-settings.md`), agent instructions (`AGENTS.md`), symlink `CLAUDE.md`, and `.shopifyignore`.
 - `/theme-forge init-agents [scope]` (alias `/theme-forge agents`) inspects an existing project and initializes or refreshes `AGENTS.md`, `CLAUDE.md`, and `.shopifyignore` scoped strictly to the design prototype rules without modifying existing design files.
+- `/theme-forge resolve [scope]` audits, reconciles, and resolves an existing theme prototype against updated Theme Forge standards (extracting hardcoded colors into CSS tokens, refactoring scripts to OOP classes, stripping duplicate shells in secondary pages, normalizing templates, and aligning settings contracts).
 
 The workflow uses plain Markdown instructions and keeps prototypes entirely independent of Liquid, Shopify theme directories, frameworks, and design tools.
 

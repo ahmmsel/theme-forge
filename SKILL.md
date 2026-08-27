@@ -1,6 +1,6 @@
 ---
 name: theme-forge
-description: "Use this skill whenever a user is starting, planning, auditing, or developing a standalone eCommerce / Shopify storefront design prototype outside a Shopify theme directory. Run /theme-forge init to scaffold a new standalone prototype workspace (HTML/CSS/JS, tokens, documentation, AGENTS.md, CLAUDE.md), or /theme-forge init-agents (or /theme-forge agents) to initialize or refresh agent guidance files in an existing project scoped strictly to the design prototype."
+description: "Use this skill whenever a user is starting, planning, auditing, developing, or reconciling a standalone eCommerce / Shopify storefront design prototype outside a Shopify theme directory. Run /theme-forge init to scaffold a new standalone prototype workspace (HTML/CSS/JS, tokens, documentation, AGENTS.md, CLAUDE.md), /theme-forge init-agents (or /theme-forge agents) to initialize or refresh agent guidance files in an existing project, or /theme-forge resolve to audit, reconcile, and resolve an existing theme prototype with updated skill rules, token architecture, OOP JS, and design integrations."
 compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Self-contained with zero runtime, build tool, framework, package manager, or external skill dependencies. No Shopify credentials required."
 ---
 
@@ -19,6 +19,7 @@ When the host supports slash commands, use:
 ```text
 /theme-forge init
 /theme-forge init-agents [scope]
+/theme-forge resolve [scope]
 ```
 
 *(Note: `/theme-forge agents` is supported as an alias for `/theme-forge init-agents`.)*
@@ -28,13 +29,21 @@ Target scopes for `init-agents`:
 - `guidelines`: Update only the design and coding rules section in `AGENTS.md`.
 - `tokens`: Update the token and global settings contract reference in `AGENTS.md`.
 
-When the host does not support slash commands, interpret `init`, `init-agents`, or `agents` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
+Target scopes for `resolve`:
+- `all` (default): Full audit and resolution across styles (tokens/colors/logical CSS), scripts (OOP classes), HTML templates (single shell/inline stripping/scaffolds), global settings contract (`docs/theme-settings.md`), design skill integration, and agent guidance.
+- `styles`: Audit and reconcile `design/styles.css` (zero hardcoded colors, 9-category CSS custom properties, color scheme scoping, bidirectional logical CSS properties).
+- `scripts`: Audit and refactor `design/script.js` into ES6 OOP classes with standardized lifecycles (`init`, `destroy`) and a central component registry.
+- `templates`: Normalize HTML prototype templates (enforce single header/footer in `index.html`, strip duplicate header/footer from secondary pages, strip inline styles/scripts, add missing default page scaffolds).
+- `docs`: Reconcile and synchronize `docs/theme-settings.md` global settings contract with active code tokens and features.
+
+When the host does not support slash commands, interpret `init`, `init-agents`, `agents`, or `resolve` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
 
 The skill must work from a project directory, not only from the directory where the skill file is installed. Resolve all project paths relative to the user's selected project root.
 
 ### Optional Design Skill Integration
 
-- If the `frontend-design` skill (or an equivalent frontend design skill) is installed and available in the environment, leverage it to guide visual direction, layout hierarchy, typography, color schemes, motion, and UI refinement when prototyping in `design/`.
+- If the `frontend-design` skill (or an equivalent frontend design skill) is installed and available in the environment, leverage it to guide visual direction, layout hierarchy, typography, color schemes, motion, and UI refinement when prototyping in `design/` or resolving existing theme styles.
+- During `/theme-forge resolve`, leverage available design skills to review visual craft, contrast, typography scaling, responsive behaviors, and micro-interactions while strictly enforcing Theme Forge token and architecture rules.
 - If `frontend-design` is not installed, proceed normally using Theme Forge's built-in design principles. Do not fail, block, or attempt automatic package installation.
 - Always preserve Theme Forge boundaries: all styles must live strictly in `design/styles.css`, client scripts in `design/script.js`, with no inline styles/scripts and no Liquid in prototypes.
 
@@ -42,9 +51,10 @@ The skill must work from a project directory, not only from the directory where 
 
 1. Read the user's requested command and optional scope from the arguments or context.
 2. If it is `init`, follow the standalone prototype initialization workflow.
-3. If it is `init-agents` or `agents`, follow the existing project agent initialization workflow (scoped strictly to the standalone design project).
-4. If no command is present, explain the valid commands and ask which one to run; do not inspect or modify project files yet.
-5. If the command is unknown, show the valid commands and ask the user to choose.
+3. If it is `init-agents` or `agents`, follow the existing project agent initialization workflow (scoped strictly to the standalone design project without modifying design files).
+4. If it is `resolve`, follow the existing theme resolution and reconciliation workflow (auditing and updating styles, scripts, templates, settings contract, and integrations).
+5. If no command is present, explain the valid commands (`init`, `init-agents`, `resolve`) and ask which one to run; do not inspect or modify project files yet.
+6. If the command is unknown, show the valid commands and ask the user to choose.
 
 At the start of a command, state the selected project root, command, and the files that will be inspected or created. At completion, report four separate lists: created, updated, skipped, and unresolved. Keep the report factual and distinguish observations from recommendations.
 
@@ -56,6 +66,7 @@ At the start of a command, state the selected project root, command, and the fil
 - If a target file already exists, preserve its content and make the smallest compatible update. Report what was preserved and what changed.
 - **Standalone Boundary Rule**: Theme Forge operates strictly within the standalone design prototype workspace (`design/`, `docs/`, `fixtures/`, `assets/`, `AGENTS.md`, `CLAUDE.md`, `.shopifyignore`). It does NOT write into Shopify theme production directories (`sections/`, `templates/`, `layout/`, `config/`).
 - The `init-agents` command modifies ONLY agent guidance files (`AGENTS.md`, `CLAUDE.md`, `.shopifyignore`); it NEVER touches, resets, or modifies existing HTML, CSS, JavaScript, fixtures, or assets.
+- The `resolve` command audits and reconciles existing prototype files (`design/styles.css`, `design/script.js`, HTML templates, `docs/theme-settings.md`, `AGENTS.md`) against updated skill rules and design integrations, preserving existing design intent while eliminating hardcoded colors, refactoring scripts to OOP, stripping duplicate shells, and aligning tokens.
 - Do not add dependencies, build tools, frameworks, design systems, or remote assets unless explicitly requested.
 - At the end of any command, report created files, updated files, skipped files, and unresolved decisions.
 
@@ -174,6 +185,69 @@ This command is ideal for:
 5. **Report Summary**:
    - Report created, updated, skipped, and unresolved items. Do not modify any HTML, CSS, JS, or fixture files.
 
+---
+
+### `/theme-forge resolve [scope]`
+
+Audit, reconcile, and resolve an existing theme design prototype against the latest Theme Forge standards, token architecture, zero hardcoded color rules, OOP JavaScript architecture, single shell principles, and design skill integrations.
+
+This command is ideal for:
+- Existing theme prototypes built with older conventions or incomplete token sets.
+- Prototypes containing hardcoded colors (hex `#...`, `rgb()`, `rgba()`, `hsl()`, named colors) in `design/styles.css` that need migration to semantic `--[theme-slug]-color-*` tokens and color scheme groups.
+- Prototypes with procedural JavaScript or loose global functions that need refactoring into ES6 OOP classes and a component registry.
+- Prototypes where secondary HTML pages duplicate `<header>` and `<footer>` markup, contain inline styles/scripts, or are missing default page coverage.
+- Synchronizing `docs/theme-settings.md` with current CSS custom properties and prototype features.
+- Upgrading existing prototypes with visual refinement and modern web best practices when `frontend-design` is available.
+
+#### `resolve` Execution Steps:
+
+1. **Workspace Inspection & Audit**:
+   - Inspect the workspace root and verify the prototype layout (`design/`, `docs/`, `fixtures/`, `assets/`).
+   - Detect existing theme identity (theme name, slug, category, design direction) from `docs/theme-settings.md`, `design/styles.css`, or HTML titles. If ambiguous, confirm with the user.
+   - Run an audit across all files:
+     - **CSS Audit**: Detect hardcoded color literals (`#...`, `rgb()`, `hsl()`, named colors), missing 9-category tokens, missing color scheme scopes (`[data-color-scheme="..."]`), and physical directional properties (`left`, `right`, `margin-left`, etc.).
+     - **JS Audit**: Detect loose procedural code, global functions, missing class encapsulation, unmanaged lifecycles, or missing component registry.
+     - **HTML Audit**: Detect duplicate `<header>`/`<footer>` markup in secondary pages, inline styles (`style="..."`), inline scripts/handlers (`onclick="..."`), and missing default Shopify page prototypes.
+     - **Docs Audit**: Check `docs/theme-settings.md` completeness across the 9 canonical categories and token alignment.
+
+2. **Resolve Styles (`design/styles.css`)** (Scope: `all` or `styles`):
+   - **Zero Hardcoded Colors**: Extract and replace all hardcoded color literals with semantic CSS custom properties (`--[theme-slug]-color-*`).
+   - **Color Schemes**: Structure tokens under root and scoped selectors (`:root`, `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`) for background, text, buttons, borders, links, icons, and badges.
+   - **9 Canonical Categories**: Ensure full token definitions for Brand, Colors, Typography (Display, Heading, Body, Accent), Buttons & Radii, Product Cards, Layout & Spacing, Cart, Search & Discovery, and Accessibility/Prose.
+   - **Logical CSS & RTL Readiness**: Convert directional physical properties to logical properties (`margin-inline-start`/`end`, `padding-inline-start`/`end`, `inset-inline-start`/`end`, `text-align: start`/`end`, border-radius logical properties).
+
+3. **Resolve JavaScript Architecture (`design/script.js`)** (Scope: `all` or `scripts`):
+   - Refactor all interactive functionality into modular ES6 classes (e.g. `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`, `PredictiveSearch`, `FilterDrawer`, `ModalManager`, `Accordion`).
+   - Implement standardized lifecycle methods on each class:
+     - `constructor(element, options)`: Store DOM references and initial state.
+     - `init()`: Set up ARIA states, observers, and call `bindEvents()`.
+     - `bindEvents()`: Attach event listeners with proper `this` binding and delegation.
+     - `destroy()`: Clean up listeners and mutations.
+   - Implement a central `ThemeApp` / `ComponentRegistry` coordinator instantiated on `DOMContentLoaded`.
+   - Eliminate all floating global functions, top-level event listeners, and procedural scripting.
+
+4. **Resolve HTML Prototype Templates** (Scope: `all` or `templates`):
+   - **Single Header & Footer Rule**: Ensure the full global `<header>` and `<footer>` live strictly in `design/index.html`. Strip duplicated header and footer markup from secondary pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.), retaining only page-specific `<main>` content.
+   - **Strip Inline Code**: Remove all inline `style="..."` attributes and inline event handlers (`onclick`, `onchange`, etc.). Relocate styles to `design/styles.css` and event handlers to `design/script.js` classes.
+   - **Default Page Completeness**: Verify all 14 default Shopify prototype pages are present (`index.html`, `404.html`, `article.html`, `blog.html`, `cart.html`, `cart-drawer.html`, `collection.html`, `collections-list.html`, `page.html`, `page.contact.html`, `password.html`, `product.html`, `search.html`, `gift_card.html`). Create minimal accessible scaffolds (`data-prototype-status="scaffold"`) for any missing pages.
+   - **Accessibility & Semantics**: Ensure semantic HTML5 elements (`<main>`, `<nav>`, `<article>`, `<section>`, `<dialog>`, `<details>`), form labels, ARIA roles, and keyboard focus states.
+
+5. **Reconcile Global Settings Contract (`docs/theme-settings.md`)** (Scope: `all` or `docs`):
+   - Synchronize `docs/theme-settings.md` with resolved CSS tokens and prototype capabilities across all 9 canonical categories.
+   - Ensure setting tables specify Shopify-safe `snake_case` IDs, control types, defaults, ranges, token mappings, scopes, and wiring statuses.
+   - Document the theme's visual direction and key characteristics.
+
+6. **Design Skill & Frontend Polish Integration**:
+   - If `frontend-design` or modern web guidance is present, apply refined visual aesthetics, harmonious typography scales, balanced spacing, cohesive micro-animations, and interactive hover/active states consistent with the theme's design direction while strictly obeying the zero hardcoded colors and single stylesheet rules.
+
+7. **Agent Guidance & Boundary Synchronization**:
+   - Update `AGENTS.md` in the project root with the resolved theme tokens, OOP architecture, and strict prototype boundaries.
+   - Ensure the relative symbolic link `CLAUDE.md -> AGENTS.md` is valid.
+   - Ensure `.shopifyignore` contains entries for `design/`, `docs/`, `AGENTS.md`, and `CLAUDE.md`.
+
+8. **Completion Report**:
+   - Provide a factual summary separating created, updated, skipped, and unresolved items, highlighting rule violations resolved (e.g. number of hardcoded colors tokenized, classes created, secondary page headers stripped).
+
 #### `.shopifyignore` Configuration
 
 Create `.shopifyignore` in the project root if it does not exist, or append missing entries to an existing `.shopifyignore` so that Shopify CLI commands (`shopify theme dev`, `shopify theme push`, `shopify theme check`) strictly ignore prototype, documentation, and agent files:
@@ -208,6 +282,7 @@ Create `AGENTS.md` in the project root if it does not exist, or update an existi
 4. **Theme Forge Commands**:
    - `/theme-forge init`: Initialize or update prototype workspace and global settings contract.
    - `/theme-forge init-agents` (alias `/theme-forge agents`): Initialize or refresh agent instructions and `.shopifyignore` for existing projects scoped strictly to the design prototype.
+   - `/theme-forge resolve [scope]`: Audit, reconcile, and resolve existing prototype styles, scripts, templates, settings contracts, and design integrations against Theme Forge standards.
 5. **Modification & Safety Rules**:
    - Never overwrite user files without confirmation.
    - Do not create or modify files outside the standalone prototype workspace (`design/`, `docs/`, `fixtures/`, `assets/`, `AGENTS.md`, `CLAUDE.md`, `.shopifyignore`).
@@ -1203,4 +1278,19 @@ Field groups to cover:
 - `.shopifyignore` is created or updated to ignore prototype and agent guidance files.
 - No existing HTML, CSS, JavaScript, fixture, or asset files were modified, overwritten, or reset.
 - Completion report lists created, updated, skipped, and unresolved items.
+
+### `/theme-forge resolve` is complete when:
+
+- An audit of the existing workspace (`design/styles.css`, `design/script.js`, HTML templates, and `docs/theme-settings.md`) has been performed against the latest Theme Forge rules and standards.
+- All hardcoded color literals in `design/styles.css` have been extracted and replaced with semantic `--[theme-slug]-color-*` tokens and color scheme scopes (`:root`, `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`).
+- All physical directional CSS properties in `design/styles.css` have been converted to logical CSS properties (`*-inline-start`, `*-inline-end`, etc.) ensuring full RTL support.
+- All JavaScript in `design/script.js` is refactored into modular ES6 classes with standard lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central `ThemeApp` / `ComponentRegistry`. All floating global functions and procedural scripts are eliminated.
+- Global `<header>` and `<footer>` are consolidated strictly into `design/index.html`, and any duplicate headers/footers in secondary HTML pages have been stripped to leave clean `<main>` templates.
+- All inline styles (`style="..."`) and inline event handlers (`onclick`, etc.) have been removed from HTML files and relocated to `design/styles.css` and `design/script.js`.
+- All 14 default Shopify page prototypes exist in `design/`, with minimal accessible scaffolds (`data-prototype-status="scaffold"`) added for any missing pages.
+- `docs/theme-settings.md` is synchronized with the 9 canonical categories and matches active CSS custom properties in `design/styles.css`.
+- If design skills (e.g., `frontend-design`) are available, visual refinements, hierarchy, typography scaling, and micro-interactions are integrated without violating token or boundary rules.
+- `AGENTS.md` is updated with full standalone prototype guidelines, `CLAUDE.md` is verified as a relative symlink to `AGENTS.md`, and `.shopifyignore` is updated.
+- A completion report is presented detailing created, updated, skipped, and unresolved items, including specific rule violations reconciled.
+
 

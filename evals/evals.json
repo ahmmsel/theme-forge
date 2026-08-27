@@ -16,7 +16,13 @@
     {
       "id": 3,
       "prompt": "I want to use Theme Forge for a storefront design prototype, but I have not said whether to initialize a new prototype or configure agent guidance for an existing project. What should I do next? Do not inspect or change files yet.",
-      "expected_output": "A concise explanation of /theme-forge init and /theme-forge init-agents (or /theme-forge agents), followed by a question asking the user to choose one. No files are created or modified.",
+      "expected_output": "A concise explanation of /theme-forge init, /theme-forge init-agents (or /theme-forge agents), and /theme-forge resolve, followed by a question asking the user to choose one. No files are created or modified.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Run /theme-forge resolve in the current project to audit and reconcile our existing prototype against the latest skill rules. Replace all hardcoded colors in design/styles.css with semantic CSS custom properties, refactor procedural scripts in design/script.js into ES6 OOP classes with a component registry, strip duplicate header/footer markup from secondary HTML pages to maintain a single shell in index.html, ensure RTL logical properties, and synchronize docs/theme-settings.md.",
+      "expected_output": "An audited and reconciled existing prototype workspace where hardcoded colors in styles.css are converted to semantic tokens across color schemes, JS in script.js is refactored into ES6 OOP classes with lifecycles and a central registry, duplicate headers/footers in secondary HTML pages are stripped leaving only clean main content, logical CSS properties are enforced, docs/theme-settings.md is synchronized, and a detailed completion report is provided.",
       "files": []
     }
   ]
