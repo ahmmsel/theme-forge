@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "init-agents-existing-project",
+  "prompt": "Run /theme-forge init-agents against this existing project. Inspect the workspace and generate or refresh AGENTS.md and CLAUDE.md scoped strictly to the standalone design prototype rules (tokenized CSS, zero hardcoded colors, OOP JavaScript, single stylesheet, single shell) without modifying or resetting existing design or fixture files.",
+  "assertions": []
+}

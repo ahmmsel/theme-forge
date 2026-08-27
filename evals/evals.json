@@ -3,20 +3,20 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Run /theme-forge init in the current project for a bilingual English and Arabic furniture storefront called Cedar & Loom. Use the slug cedar-loom, support English and Arabic with RTL for Arabic, and create the design-first prototype structure and documentation without adding Shopify Liquid or homepage sections.",
-      "expected_output": "A preserved or newly created design-first workspace with the default page prototypes represented, docs/theme-settings.md containing the identity and global settings contract, docs/shopify-wiring.md as a not-started placeholder, .shopifyignore configured for prototype/doc paths, and AGENTS.md with a CLAUDE.md symbolic link. The report identifies created, updated, skipped, and unresolved items.",
+      "prompt": "Run /theme-forge init in the current project for a bilingual English and Arabic furniture storefront called Cedar & Loom. Use the slug cedar-loom, support English and Arabic with RTL for Arabic, and create the standalone design-first prototype structure and documentation without adding Shopify Liquid or theme directories.",
+      "expected_output": "A preserved or newly created standalone design-first workspace with the default page prototypes represented, docs/theme-settings.md containing the identity and 9-category global settings contract, .shopifyignore configured for prototype/doc paths, and AGENTS.md with a CLAUDE.md symbolic link. The report identifies created, updated, skipped, and unresolved items.",
       "files": []
     },
     {
       "id": 2,
-      "prompt": "Run /theme-forge wire against this existing Shopify prototype. Inspect the design/ and docs/ directories plus any Liquid, JSON, CSS, JavaScript, fixture, and app-integration files you find. Produce or update docs/shopify-wiring.md only; do not modify the prototype or Shopify production files. Clearly mark inferred and unresolved mappings.",
-      "expected_output": "A codebase-specific docs/shopify-wiring.md providing a wiring map for global theme settings, sections, blocks, and templates with classification labels, schema targets, and a created/updated/skipped/unresolved completion report.",
+      "prompt": "Run /theme-forge init-agents against this existing project. Inspect the workspace and generate or refresh AGENTS.md and CLAUDE.md scoped strictly to the standalone design prototype rules (tokenized CSS, zero hardcoded colors, OOP JavaScript, single stylesheet, single shell) without modifying or resetting existing design or fixture files.",
+      "expected_output": "An inspected existing project where AGENTS.md is created or updated with complete standalone design prototype guidance, CLAUDE.md is linked via symlink, .shopifyignore is configured, and no existing HTML, CSS, JavaScript, or fixture files are altered. A created/updated/skipped/unresolved completion report is output.",
       "files": []
     },
     {
       "id": 3,
-      "prompt": "I want to use Theme Forge for a Shopify theme, but I have not said whether to initialize a prototype or audit an existing one. What should I do next? Do not inspect or change files yet.",
-      "expected_output": "A concise explanation of /theme-forge init, /theme-forge wire, and /theme-forge forge, followed by a question asking the user to choose one. No files are created or modified.",
+      "prompt": "I want to use Theme Forge for a storefront design prototype, but I have not said whether to initialize a new prototype or configure agent guidance for an existing project. What should I do next? Do not inspect or change files yet.",
+      "expected_output": "A concise explanation of /theme-forge init and /theme-forge init-agents (or /theme-forge agents), followed by a question asking the user to choose one. No files are created or modified.",
       "files": []
     }
   ]

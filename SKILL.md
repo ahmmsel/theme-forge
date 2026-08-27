@@ -1,14 +1,14 @@
 ---
 name: theme-forge
-description: "Use this skill whenever a user is starting, planning, auditing, wiring, or implementing a Shopify theme whose visual design is developed outside Shopify. Run /theme-forge init to scaffold a prototype workspace, /theme-forge wire [target] to generate a wiring map for global settings, sections, blocks, or templates in docs/shopify-wiring.md, and /theme-forge forge [target] (or /theme-forge implement [target]) to execute the wiring map and generate production Shopify Liquid, JSON schemas, and templates."
+description: "Use this skill whenever a user is starting, planning, auditing, or developing a standalone eCommerce / Shopify storefront design prototype outside a Shopify theme directory. Run /theme-forge init to scaffold a new standalone prototype workspace (HTML/CSS/JS, tokens, documentation, AGENTS.md, CLAUDE.md), or /theme-forge init-agents (or /theme-forge agents) to initialize or refresh agent guidance files in an existing project scoped strictly to the design prototype."
 compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Self-contained with zero runtime, build tool, framework, package manager, or external skill dependencies. No Shopify credentials required."
 ---
 
 # Theme Forge
 
-Theme Forge is a design-first workflow for building Shopify themes. It keeps visual design independent from Shopify implementation until the design contract is stable, then generates a wiring map and implements the approved design as production Shopify theme code.
+Theme Forge is a design-first workflow for building eCommerce storefront prototypes. It develops visual design, interaction architecture, token systems, and components completely standalone in a dedicated prototype workspace, keeping frontend craft independent of Shopify theme directories until the design contract is complete.
 
-The skill is reusable across themes. A theme name, theme slug, category, visual language, and design direction may change per project. The workflow and Shopify checks remain consistent.
+The skill is reusable across stores and themes. A theme name, theme slug, category, visual language, and design direction may change per project. The prototype rules, token architecture, and OOP JavaScript standards remain consistent.
 
 ## Portability and Invocation
 
@@ -18,24 +18,17 @@ When the host supports slash commands, use:
 
 ```text
 /theme-forge init
-/theme-forge wire [target]
-/theme-forge forge [target]
+/theme-forge init-agents [scope]
 ```
 
-*(Note: `/theme-forge implement [target]` is supported as an alias for `/theme-forge forge`.)*
+*(Note: `/theme-forge agents` is supported as an alias for `/theme-forge init-agents`.)*
 
-Target scopes for `wire` and `forge`:
-- `all` (default): Entire theme (global settings, shell, all sections, blocks, and templates).
-- `settings` (or `global`): Global theme settings (`config/settings_schema.json`), `color_scheme_group` definitions, and root CSS tokens.
-- `header-footer` (or `shell`): Global header & footer sections and section groups (`sections/header-group.json`, `sections/footer-group.json`, `sections/header.liquid`, `sections/footer.liquid`).
-- `product`: Product page section, blocks, and `templates/product.json`.
-- `collection`: Collection page section, filters, sorting, and `templates/collection.json`.
-- `cart`: Cart page section, AJAX cart drawer section, and `templates/cart.json`.
-- `blog`: Blog and article sections and `templates/blog.json`, `templates/article.json`.
-- `search`: Search section and `templates/search.json`.
-- `pages`: Standard page, contact, 404, password, and gift card templates/sections.
+Target scopes for `init-agents`:
+- `all` (default): Refresh full agent guidance in `AGENTS.md`, ensure `CLAUDE.md` symlink, and update `.shopifyignore`.
+- `guidelines`: Update only the design and coding rules section in `AGENTS.md`.
+- `tokens`: Update the token and global settings contract reference in `AGENTS.md`.
 
-When the host does not support slash commands, interpret `init`, `wire`, or `forge` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
+When the host does not support slash commands, interpret `init`, `init-agents`, or `agents` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
 
 The skill must work from a project directory, not only from the directory where the skill file is installed. Resolve all project paths relative to the user's selected project root.
 
@@ -47,14 +40,13 @@ The skill must work from a project directory, not only from the directory where 
 
 ### Command selection
 
-1. Read the user's requested command and optional target scope from the arguments or context.
-2. If it is `init`, follow the initialization workflow.
-3. If it is `wire`, follow the wiring investigation workflow for the requested target (defaulting to `all`).
-4. If it is `forge` or `implement`, follow the theme implementation workflow for the requested target (defaulting to `all`).
-5. If no command is present, explain the valid commands and ask which one to run; do not inspect or modify project files yet.
-6. If the command is unknown, show the valid commands and ask the user to choose.
+1. Read the user's requested command and optional scope from the arguments or context.
+2. If it is `init`, follow the standalone prototype initialization workflow.
+3. If it is `init-agents` or `agents`, follow the existing project agent initialization workflow (scoped strictly to the standalone design project).
+4. If no command is present, explain the valid commands and ask which one to run; do not inspect or modify project files yet.
+5. If the command is unknown, show the valid commands and ask the user to choose.
 
-At the start of a command, state the selected project root, command, target scope, and the files that will be inspected or created. At completion, report four separate lists: created, updated, skipped, and unresolved. Keep the report factual and distinguish observations from recommendations.
+At the start of a command, state the selected project root, command, and the files that will be inspected or created. At completion, report four separate lists: created, updated, skipped, and unresolved. Keep the report factual and distinguish observations from recommendations.
 
 ## Safety and Change Policy
 
@@ -62,17 +54,16 @@ At the start of a command, state the selected project root, command, target scop
 - Never delete, reset, or overwrite user-authored files without explicit confirmation.
 - Create missing directories and files only when they are part of the requested command output.
 - If a target file already exists, preserve its content and make the smallest compatible update. Report what was preserved and what changed.
-- The `wire` command is strictly limited to generating or updating the wiring map in `docs/shopify-wiring.md`; it does NOT modify prototype files or write Shopify production code.
-- The `forge` (or `implement`) command implements the blueprint from `docs/shopify-wiring.md` into Shopify theme production files (`config/`, `sections/`, `blocks/`, `snippets/`, `templates/`, `layout/`); it does NOT modify files in `design/` unless the user explicitly asks for prototype changes.
+- **Standalone Boundary Rule**: Theme Forge operates strictly within the standalone design prototype workspace (`design/`, `docs/`, `fixtures/`, `assets/`, `AGENTS.md`, `CLAUDE.md`, `.shopifyignore`). It does NOT write into Shopify theme production directories (`sections/`, `templates/`, `layout/`, `config/`).
+- The `init-agents` command modifies ONLY agent guidance files (`AGENTS.md`, `CLAUDE.md`, `.shopifyignore`); it NEVER touches, resets, or modifies existing HTML, CSS, JavaScript, fixtures, or assets.
 - Do not add dependencies, build tools, frameworks, design systems, or remote assets unless explicitly requested.
-- Do not invent Shopify capabilities. Mark uncertain mappings as `unresolved` and explain what must be verified.
 - At the end of any command, report created files, updated files, skipped files, and unresolved decisions.
 
 ## Commands
 
 ### `/theme-forge init`
 
-Initialize a new theme design workspace at the selected project root.
+Initialize a new standalone theme design workspace at the selected project root.
 
 Before creating files, ask for:
 
@@ -93,19 +84,19 @@ Question formatting rules for hosts that use structured question tools:
 
 #### Initialization behavior
 
-Create the smallest useful design-first structure. Preserve existing user files and never overwrite an existing file without inspecting it first.
+Create the smallest useful standalone design-first structure. Preserve existing user files and never overwrite an existing file without inspecting it first.
 
 Initialization root rule: run `/theme-forge init` against the selected project root and create or update child paths from there. Do not treat `design/` as the project root.
 
 Use this order:
 
-1. Inspect the project root and identify existing design, docs, assets, Shopify, and configuration directories.
+1. Inspect the project root and identify existing design, docs, assets, and configuration directories.
 2. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
 3. Create only missing directories and files.
-4. Write the settings contract and wiring placeholder using the requested identity.
+4. Write the settings contract using the requested identity.
 5. Derive the global settings contract from the project itself: inspect existing brand assets, styles, fixtures, fonts, spacing, radii, shadows, and any pre-existing CSS or tokens before writing `docs/theme-settings.md`. The contract must cover every visual dimension the prototype will need, not a minimal starter set.
 6. Create or update `.shopifyignore` in the project root to ensure Shopify CLI ignores prototype and documentation files.
-7. Create or update `AGENTS.md` in the project root with agent guidelines, prototype boundaries, and instructions for using `design/` and `docs/shopify-wiring.md` for Shopify wiring when requested, then ensure a `CLAUDE.md` relative symbolic link points to `AGENTS.md`.
+7. Create or update `AGENTS.md` in the project root with agent guidelines and strict design prototype boundaries, then ensure a `CLAUDE.md` relative symbolic link points to `AGENTS.md`.
 8. Summarize created, updated, skipped, and unresolved items.
 
 ```text
@@ -131,7 +122,6 @@ design/
 
 docs/
   theme-settings.md
-  shopify-wiring.md
 
 .shopifyignore
 AGENTS.md
@@ -147,10 +137,42 @@ Add or update `docs/theme-settings.md` with:
 - The rule that global settings are designed before homepage sections and blocks.
 - The selected CSS token naming convention: `--[theme-slug]-*` or an existing project convention.
 - The approved page list.
-- A setting inventory table with the columns defined below.
+- A setting inventory table with the canonical categories defined below.
 - A clear marker for unresolved decisions.
 
-Add `docs/shopify-wiring.md` as a placeholder only when it does not exist. It must contain the theme identity, date, source directories, inspection status (`not started`), and a note that `/theme-forge wire` must be run after the prototype is sufficiently complete. If the file already contains a wiring report, do not replace it during `init`.
+---
+
+### `/theme-forge init-agents [scope]` (Alias: `/theme-forge agents`)
+
+Initialize or refresh agent guidance files (`AGENTS.md`, `CLAUDE.md`, `.shopifyignore`) in an existing project, scoped strictly to the standalone design prototype without altering existing design files.
+
+This command is ideal for:
+- Existing design repositories that need standardized AI agent rules and boundaries.
+- Projects where `AGENTS.md` was removed, outdated, or needs realignment with Theme Forge's strict token and OOP standards.
+- Monorepos or existing repositories adding a standalone `design/` prototype workspace.
+
+#### `init-agents` Execution Steps:
+
+1. **Project Inspection**:
+   - Inspect the workspace root to detect existing directories (`design/`, `docs/`, `fixtures/`, `assets/`).
+   - Detect existing theme slug or brand identifiers from `docs/theme-settings.md`, `design/styles.css`, or `package.json`.
+   - Identify existing CSS custom property naming conventions (e.g. `--[theme-slug]-*`).
+   - Identify existing interactive components and JS class structures in `design/script.js`.
+2. **Generate / Update `AGENTS.md`**:
+   - Write or update `AGENTS.md` in the project root with complete, scoped agent instructions (see `AGENTS.md` Specification below).
+   - If `AGENTS.md` already exists, preserve project-specific custom sections while updating/ensuring Theme Forge design boundaries and coding standards.
+3. **Establish `CLAUDE.md` Symbolic Link**:
+   - Create or verify the relative symbolic link `CLAUDE.md -> AGENTS.md` in the project root (`ln -s AGENTS.md CLAUDE.md`).
+4. **Configure `.shopifyignore`**:
+   - Create or update `.shopifyignore` to guarantee prototype directories and agent files are ignored:
+     ```text
+     design/
+     docs/
+     AGENTS.md
+     CLAUDE.md
+     ```
+5. **Report Summary**:
+   - Report created, updated, skipped, and unresolved items. Do not modify any HTML, CSS, JS, or fixture files.
 
 #### `.shopifyignore` Configuration
 
@@ -164,16 +186,16 @@ AGENTS.md
 CLAUDE.md
 ```
 
-#### `AGENTS.md` and `CLAUDE.md` Symbolic Link
+#### `AGENTS.md` and `CLAUDE.md` Symbolic Link Specification
 
-Create `AGENTS.md` in the project root if it does not exist, or update an existing `AGENTS.md` (such as in an existing Shopify theme project) by preserving existing instructions and appending/merging the Theme Forge conventions. Create a symbolic link `CLAUDE.md` pointing to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`) if missing.
+Create `AGENTS.md` in the project root if it does not exist, or update an existing `AGENTS.md` by preserving existing instructions and appending/merging the Theme Forge conventions. Create a symbolic link `CLAUDE.md` pointing to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`) if missing.
 
-`AGENTS.md` serves as persistent guidance for coding agents working on the theme prototype and subsequent wiring. It must contain:
+`AGENTS.md` serves as persistent guidance for coding agents working on the standalone theme prototype. It must contain:
 
 1. **Theme Identity & Overview**: Theme name, slug, category, supported languages, RTL direction requirements, and chosen design direction.
 2. **Design-First Architecture & Boundaries**:
    - Visual prototyping is strictly confined to `design/`.
-   - No Liquid, Shopify API endpoints, build systems, CSS frameworks, or JavaScript libraries in `design/`.
+   - Standalone execution: no Liquid, Shopify API endpoints, build systems, CSS frameworks, or JavaScript libraries in `design/`.
    - Clean, semantic HTML5, vanilla CSS with CSS custom properties (`--[theme-slug]-*`), and vanilla Object-Oriented JavaScript (OOP) for client interactions.
    - Single stylesheet and script rule: all styles across the prototype must live strictly in the single shared CSS file (`design/styles.css`) and all JavaScript in the single shared JS file (`design/script.js`). Never use inline CSS (`style` attributes or `<style>` blocks) or inline JavaScript (event handlers like `onclick` or inline `<script>` blocks) inside HTML pages.
    - **Strict Zero Hardcoded Colors Rule**: `design/styles.css` must NEVER contain hardcoded color literals (no hex `#...`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, or named colors like `white`, `black`, `red`). Every single color value across all components, utilities, and states must strictly reference semantic CSS variables / tokens (`var(--[theme-slug]-color-*)`).
@@ -182,24 +204,15 @@ Create `AGENTS.md` in the project root if it does not exist, or update an existi
    - Bidirectional-safe layout with logical CSS properties (`inline-start`/`inline-end`).
 3. **Workspace Directory Map**:
    - `design/`: Isolated pure HTML/CSS/JS prototypes, styles, scripts, fixtures.
-   - `docs/`: `theme-settings.md` (global settings contract) and `shopify-wiring.md` (wiring map for Shopify implementation).
-   - Shopify production directories (when co-located in a Shopify theme): `sections/`, `snippets/`, `templates/`, `layout/`, `config/`, `assets/`, `locales/`.
+   - `docs/`: `theme-settings.md` (global settings contract).
 4. **Theme Forge Commands**:
    - `/theme-forge init`: Initialize or update prototype workspace and global settings contract.
-   - `/theme-forge wire [target]`: Inspect prototype and generate the wiring map in `docs/shopify-wiring.md` for all or a specific target (`settings`, `header-footer`, `product`, `collection`, `cart`, `blog`, `search`, `pages`).
-   - `/theme-forge forge [target]` (or `/theme-forge implement [target]`): Implement production Shopify theme files (`config/`, `sections/`, `blocks/`, `templates/`, `layout/`) from the wiring blueprint for all or a targeted component.
-5. **Shopify Wiring & Implementation Workflow (When Requested by User)**:
-   - When the user asks to wire or implement the Shopify theme (or runs `/theme-forge forge`):
-     - Consult `docs/shopify-wiring.md` as the authoritative implementation guide.
-     - Implement global theme settings in `config/settings_schema.json` using the mapped IDs, types, and `color_scheme_group` roles.
-     - Build Liquid sections in `sections/*.liquid` and blocks conforming to the mapped schemas and data sources in `docs/shopify-wiring.md`.
-     - Implement JSON templates in `templates/*.json` following the page-to-template map and section composition.
-     - Do not modify files in `design/` during theme implementation unless the user explicitly requests changes to the visual prototype.
-6. **Modification & Safety Rules**:
+   - `/theme-forge init-agents` (alias `/theme-forge agents`): Initialize or refresh agent instructions and `.shopifyignore` for existing projects scoped strictly to the design prototype.
+5. **Modification & Safety Rules**:
    - Never overwrite user files without confirmation.
-   - Do not modify prototype files or write Shopify theme code during `wire` inspections; strictly generate the wiring map.
+   - Do not create or modify files outside the standalone prototype workspace (`design/`, `docs/`, `fixtures/`, `assets/`, `AGENTS.md`, `CLAUDE.md`, `.shopifyignore`).
    - Keep settings documented in `docs/theme-settings.md` synchronized with CSS tokens.
-   - Route all colors strictly through documented color scheme roles and `--[theme-slug]-color-*` tokens; never introduce hard-coded colors or per-component color values in `design/styles.css` or Liquid templates.
+   - Route all colors strictly through documented color scheme roles and `--[theme-slug]-color-*` tokens; never introduce hard-coded colors or per-component color values in `design/styles.css`.
 
 For the `CLAUDE.md` symbolic link:
 - Create it in the project root pointing to `AGENTS.md` via `ln -s AGENTS.md CLAUDE.md` or equivalent filesystem operation.
@@ -1164,160 +1177,30 @@ Field groups to cover:
 - Navigation, cart count indicator, account links, locale/currency selectors.
 - Global announcement and utility surfaces without inventing homepage sections.
 
-## Source Precedence for `wire`
-
-When sources disagree, use this precedence and record the conflict:
-
-1. Existing Shopify schema and Liquid implementation.
-2. Existing `docs/theme-settings.md` decisions.
-3. Existing HTML, CSS, and JavaScript behavior.
-4. Fixtures and comments.
-5. Generic Shopify assumptions.
-
-The report must distinguish observed facts from recommendations. Use `observed`, `inferred`, or `proposed` in the confidence field rather than presenting an inference as an existing implementation.
-
-## `/theme-forge wire [target]`
-
-Generate or update `docs/shopify-wiring.md` from the current codebase for all or a specific target (`all`, `settings`, `header-footer`, `product`, `collection`, `cart`, `blog`, `search`, `pages`).
-
-The `/theme-forge wire` command serves one dedicated purpose: **produce a wiring map that maps global theme settings, sections, blocks, and templates to Shopify**. It is strictly a mapping and specification document. Do not do more than this: do not perform code implementation, do not create or modify Liquid/Shopify files, and do not modify prototype files.
-
-Before writing, inspect the project and identify:
-
-- Global settings documented in `docs/theme-settings.md` and CSS custom properties (`--[theme-slug]-*`) in `design/styles.css`.
-- Color schemes, roles, and tokens.
-- HTML pages in `design/` and their layout structure (with header/footer in `design/index.html`).
-- Prototype components, sections, and blocks.
-- Existing Liquid files, Shopify schemas, templates, snippets, or fixtures if present.
-
-### Wiring document requirements
-
-Write or update `docs/shopify-wiring.md` with these focused sections:
-
-1. **Project identity and inspection scope**
-   - Theme name, slug, category, inspected paths, targeted scope, and inspection date.
-
-2. **Global theme settings wiring map** (when target is `all` or `settings`)
-   - Map every global setting and CSS token (`--[theme-slug]-*`) to `config/settings_schema.json`.
-   - Proposed schema category, setting ID (`snake_case`), Shopify control type, default value, and CSS custom property output.
-   - Proposed `color_scheme_group` definition mapping semantic color roles to tokens across default schemes (Primary, Secondary, Contrast).
-
-3. **Sections and blocks wiring map** (when target is `all`, `header-footer`, `product`, `collection`, `cart`, `blog`, `search`, or `pages`)
-   - Map prototype UI components, sections, and blocks to Shopify Liquid sections (`sections/*.liquid`) and blocks.
-   - Proposed section/block settings, presets, block types, data sources, and shared snippet dependencies.
-
-4. **Page-to-template wiring map** (when target is `all` or a specific page/template)
-   - Map each default prototype page (`index.html`, `product.html`, `collection.html`, `cart.html`, etc.) to its Shopify JSON template target (`templates/*.json`).
-   - Required Liquid objects, forms, routes, and template section structure.
-
-5. **Unresolved wiring & notes**
-   - Ambiguous settings, unsupported prototype features, or decisions required before theme development.
-
-### Classification vocabulary
-
-Use one or more of these labels for every mapped item:
-
-- `native`: supported by Shopify's platform behavior.
-- `liquid`: rendered from Shopify objects, filters, or tags.
-- `theme-schema`: configured through theme settings, section settings, or block settings.
-- `ajax`: requires a Shopify endpoint and theme JavaScript.
-- `app-dependent`: requires an installed app or app embed.
-- `metafield-dependent`: requires merchant-created custom data.
-- `implementation-only`: should remain in CSS, JavaScript, or markup internals.
-- `not-applicable`: prototype-only or irrelevant to Shopify output.
-- `unresolved`: needs a decision or validation before implementation.
-
-### Rules for wire command
-
-- The wire command must ONLY produce the wiring map for global theme settings, sections, blocks, and templates. Do not do more than this.
-- Do not perform code implementation or generate Liquid template files during `wire`.
-- Do not modify prototype files in `design/` during `/theme-forge wire`.
-- Do not convert every CSS token into a merchant setting; preserve internal code-level tokens where exposing them adds noise.
-- Route all colors through the `color_scheme_group` rather than standalone per-section color pickers.
-- Mark uncertain mappings as `unresolved`.
-
----
-
-## `/theme-forge forge [target]` (Alias: `/theme-forge implement [target]`)
-
-Execute the wiring map documented in `docs/shopify-wiring.md` to generate or update production Shopify theme files for the specified target (or `all`).
-
-### Target Scopes & Implementation Behavior:
-
-1. **`settings` (or `global`)**:
-   - Generates/updates `config/settings_schema.json` with the nine canonical settings groups, control types, defaults, and `color_scheme_group` definition.
-   - Generates/updates root and scoped color scheme CSS variables in `layout/theme.liquid` or `assets/theme.css`.
-
-2. **`header-footer` (or `shell`)**:
-   - Generates `sections/header.liquid` and `sections/footer.liquid` based on the shared shell in `design/index.html`.
-   - Generates `sections/header-group.json` and `sections/footer-group.json` (or updates `layout/theme.liquid` section calls).
-
-3. **`product`**:
-   - Generates `sections/main-product.liquid` (media gallery, variant pickers, purchase form, price) and associated blocks.
-   - Generates `templates/product.json` with the section order and default block configuration.
-
-4. **`collection`**:
-   - Generates `sections/main-collection.liquid` with product grid, storefront filtering (`collection.filters`), sorting, and pagination.
-   - Generates `templates/collection.json` and `templates/collections-list.json`.
-
-5. **`cart`**:
-   - Generates `sections/main-cart.liquid` (line items, quantity adjusters, discount notes, checkout).
-   - Generates `sections/cart-drawer.liquid` for AJAX drawer interactions.
-   - Generates `templates/cart.json`.
-
-6. **`blog`**:
-   - Generates `sections/main-blog.liquid`, `sections/main-article.liquid`, and `templates/blog.json`, `templates/article.json`.
-
-7. **`search`**:
-   - Generates `sections/main-search.liquid` supporting multi-type result cards (products, articles, pages) and `templates/search.json`.
-
-8. **`pages`**:
-   - Generates `sections/main-page.liquid`, `sections/contact-form.liquid`, `templates/page.json`, `templates/page.contact.json`, `templates/404.json`, `templates/password.json`, and `templates/gift_card.liquid`.
-
-9. **`all` (default)**:
-   - Implements all components above in proper dependency order: `settings` foundation -> `header-footer` shell -> commerce templates (`product`, `collection`, `cart`) -> supporting templates (`blog`, `search`, `pages`).
-
-### Rules for forge (implement) command:
-
-- Always inspect and consult `docs/shopify-wiring.md` as the blueprint before generating theme files. If `docs/shopify-wiring.md` does not exist or lacks mapping for the target, run the `wire` step first.
-- Strictly adhere to modern Shopify theme standards:
-  - Valid `{% schema %}` JSON schema for all sections and blocks.
-  - Use `image_url` filter (never deprecated `img_url`).
-  - Use semantic HTML tags and CSS custom properties matching `--[theme-slug]-*`.
-  - Wrap user-facing copy in translation tags `{{ 'key' | t }}` and populate `locales/en.default.json`.
-- Do not modify or delete prototype files in `design/` during `forge`.
-- Report all created, updated, skipped, and unresolved files upon completion.
-
----
-
 ## Completion Criteria
 
-`/theme-forge init` is complete when:
+### `/theme-forge init` is complete when:
 
-- The requested theme identity and category are recorded.
+- The requested theme identity and category are recorded in `docs/theme-settings.md`.
 - The design direction is documented with key visual characteristics.
-- The design workspace exists or an existing equivalent is documented.
-- All default page prototypes are represented.
-- All styles are consolidated strictly into the single shared CSS file (`design/styles.css`) with **zero hardcoded colors** (all colors strictly mapped to `--[theme-slug]-color-*` tokens and color scheme scopes), and all client logic into `design/script.js` written **strictly using Object-Oriented Programming (OOP)** ES6 classes with clean encapsulation, standardized lifecycles, and a component registry. Zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
+- The standalone design workspace (`design/`) exists with all default page prototypes represented (`index.html`, `product.html`, `collection.html`, `collections-list.html`, `cart.html`, `cart-drawer.html`, `blog.html`, `article.html`, `search.html`, `page.html`, `page.contact.html`, `password.html`, `gift_card.html`, `404.html`).
+- All styles are consolidated strictly into the single shared CSS file (`design/styles.css`) with **zero hardcoded colors** (all colors strictly mapped to `--[theme-slug]-color-*` tokens and color scheme scopes), and all client logic into `design/script.js` written **strictly using Object-Oriented Programming (OOP)** ES6 classes with clean encapsulation, standardized lifecycles, and a central component registry. Zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
 - `docs/theme-settings.md` contains a robust, project-derived global settings contract covering the nine canonical global categories, with 1:1 matching CSS custom properties (`--[theme-slug]-*`) defined in `design/styles.css`, including the full color scheme system with at least three schemes and role-to-token mappings.
 - Global header and footer are developed strictly in `design/index.html` without duplicating markup in secondary page prototypes.
+- Realistic static fixture data is placed in `design/fixtures/` and assets in `design/assets/`.
 - `.shopifyignore` is created or updated in the project root to ignore `design/`, `docs/`, `AGENTS.md`, and `CLAUDE.md`.
-- `AGENTS.md` is created or updated in the project root with the theme conventions, prototype awareness (`design/`, `docs/`), and Shopify wiring guidance.
-- `CLAUDE.md` is created as a symbolic link pointing to `AGENTS.md`.
-- The prototype remains independent of Liquid, Shopify APIs, and any external frameworks.
+- `AGENTS.md` is created or updated in the project root with the theme conventions and strict standalone prototype rules.
+- `CLAUDE.md` is created as a relative symbolic link pointing to `AGENTS.md`.
+- The prototype remains completely independent of Liquid, Shopify APIs, and any external frameworks.
 - No homepage sections or blocks were invented prematurely.
+- Completion report lists created, updated, skipped, and unresolved items.
 
-`/theme-forge wire` is complete when:
+### `/theme-forge init-agents` (or `/theme-forge agents`) is complete when:
 
-- `docs/shopify-wiring.md` contains a complete wiring map for the targeted scope (or global theme settings, sections, blocks, and templates) based on the inspected codebase.
-- Global theme settings and CSS tokens are mapped to `config/settings_schema.json` and color scheme definitions.
-- Prototype sections, blocks, and default pages are mapped to Shopify equivalents with schema and data bindings.
-- Unresolved or ambiguous items are explicitly documented.
-- No prototype or Shopify production files were modified.
+- The existing project structure, theme identifiers, CSS custom properties, and JavaScript components have been inspected.
+- `AGENTS.md` is created or updated in the project root with comprehensive guidelines scoped strictly to the standalone design prototype (tokens, OOP JS, single stylesheet/script, single header/footer in `index.html`, RTL logical properties, boundary isolation).
+- `CLAUDE.md` is created or verified as a relative symbolic link pointing to `AGENTS.md`.
+- `.shopifyignore` is created or updated to ignore prototype and agent guidance files.
+- No existing HTML, CSS, JavaScript, fixture, or asset files were modified, overwritten, or reset.
+- Completion report lists created, updated, skipped, and unresolved items.
 
-`/theme-forge forge` (or `/theme-forge implement`) is complete when:
-
-- The targeted Shopify theme production files (`config/settings_schema.json`, `sections/*.liquid`, `templates/*.json`, `layout/theme.liquid`, `locales/*.json`) are created or updated adhering to `docs/shopify-wiring.md`.
-- All generated section schemas contain valid JSON and presets.
-- CSS tokens and color schemes are properly wired to `settings` and `layout/theme.liquid`.
-- Prototype files in `design/` remain preserved and unmodified.

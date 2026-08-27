@@ -1,6 +1,0 @@
-{
-  "eval_id": 2,
-  "eval_name": "wire-existing-prototype",
-  "prompt": "Run /theme-forge wire against this existing Shopify prototype. Inspect the design/ and docs/ directories plus any Liquid, JSON, CSS, JavaScript, fixture, and app-integration files you find. Produce or update docs/shopify-wiring.md only; do not modify the prototype or Shopify production files. Clearly mark inferred and unresolved mappings.",
-  "assertions": []
-}
