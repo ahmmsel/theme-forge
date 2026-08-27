@@ -18,6 +18,9 @@ Install or copy this directory into the skills directory supported by your AI co
 
 - Preserve existing project files and avoid destructive changes.
 - Keep design prototypes independent from Shopify implementation.
+- Single stylesheet and single script rule with zero inline CSS/JS.
+- Strict token-driven styling: never use hardcoded colors in `styles.css`; all colors must resolve through CSS custom properties (`--[theme-slug]-color-*`).
+- Strict Object-Oriented JavaScript (OOP): all client logic in `script.js` must be structured into ES6 classes with clean encapsulation, standardized lifecycles, and a component registry.
 - Distinguish observed facts, inferences, recommendations, and unresolved decisions.
 - Prefer native HTML, progressive enhancement, accessibility, localization, and RTL-safe patterns.
 - Do not invent Shopify capabilities or modify production Shopify files during wiring analysis.

@@ -174,8 +174,10 @@ Create `AGENTS.md` in the project root if it does not exist, or update an existi
 2. **Design-First Architecture & Boundaries**:
    - Visual prototyping is strictly confined to `design/`.
    - No Liquid, Shopify API endpoints, build systems, CSS frameworks, or JavaScript libraries in `design/`.
-   - Clean, semantic HTML5, vanilla CSS with CSS custom properties (`--[theme-slug]-*`), and vanilla JS for client interactions.
+   - Clean, semantic HTML5, vanilla CSS with CSS custom properties (`--[theme-slug]-*`), and vanilla Object-Oriented JavaScript (OOP) for client interactions.
    - Single stylesheet and script rule: all styles across the prototype must live strictly in the single shared CSS file (`design/styles.css`) and all JavaScript in the single shared JS file (`design/script.js`). Never use inline CSS (`style` attributes or `<style>` blocks) or inline JavaScript (event handlers like `onclick` or inline `<script>` blocks) inside HTML pages.
+   - **Strict Zero Hardcoded Colors Rule**: `design/styles.css` must NEVER contain hardcoded color literals (no hex `#...`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, or named colors like `white`, `black`, `red`). Every single color value across all components, utilities, and states must strictly reference semantic CSS variables / tokens (`var(--[theme-slug]-color-*)`).
+   - **Strict Object-Oriented JavaScript (OOP) Rule**: `design/script.js` must strictly follow an Object-Oriented Programming architecture using ES6 classes. Every interactive component/feature must be encapsulated in a class (e.g., `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`) with standardized lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central component registry/app bootstrap. No loose procedural scripts or global floating functions.
    - **Single Header & Footer Rule**: The global `<header>` (announcement bar, navigation, logo, cart trigger, etc.) and `<footer>` (links, newsletter, copyright, disclosures) must **strictly only be developed in `design/index.html`** (the shared shell). Never duplicate full header and footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, etc.); secondary pages contain only their page-specific `<main>` template content to prevent duplication and maintenance divergence.
    - Bidirectional-safe layout with logical CSS properties (`inline-start`/`inline-end`).
 3. **Workspace Directory Map**:
@@ -197,7 +199,7 @@ Create `AGENTS.md` in the project root if it does not exist, or update an existi
    - Never overwrite user files without confirmation.
    - Do not modify prototype files or write Shopify theme code during `wire` inspections; strictly generate the wiring map.
    - Keep settings documented in `docs/theme-settings.md` synchronized with CSS tokens.
-   - Route all colors through the documented color scheme roles and tokens; never introduce hard-coded colors or per-component color values.
+   - Route all colors strictly through documented color scheme roles and `--[theme-slug]-color-*` tokens; never introduce hard-coded colors or per-component color values in `design/styles.css` or Liquid templates.
 
 For the `CLAUDE.md` symbolic link:
 - Create it in the project root pointing to `AGENTS.md` via `ln -s AGENTS.md CLAUDE.md` or equivalent filesystem operation.
@@ -214,9 +216,10 @@ The prototype must use:
 
 - Plain HTML files, exactly one shared CSS file (`design/styles.css`), and exactly one shared JavaScript file (`design/script.js`).
 - Single stylesheet rule: every style across the prototype must reside in the single shared CSS file (`design/styles.css`). Never write or inject inline CSS (using `style` attributes or `<style>` blocks) or inline JavaScript (using event attributes like `onclick` or inline `<script>` blocks) inside any HTML page.
+- **Strict Zero Hardcoded Colors Rule**: `design/styles.css` must NEVER contain any hardcoded color literals (hex, rgb, rgba, hsl, or named colors). Every color property (`color`, `background-color`, `border-color`, `box-shadow`, `fill`, `stroke`, etc.) must strictly reference semantic CSS custom properties (`var(--[theme-slug]-color-*)`).
 - Single header and footer source of truth: Develop the global `<header>` and `<footer>` **strictly in `design/index.html`** (the shared shell). Never duplicate header or footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.). All other prototype pages focus purely on their page-specific `<main>` content to eliminate duplication and maintenance overhead.
 - Plain CSS only — no CSS frameworks, preprocessors, or utility libraries (no Tailwind, Bootstrap, etc.).
-- Vanilla JavaScript only — no JS frameworks, libraries, or build tools (no React, Alpine, GSAP, etc.).
+- **Vanilla JavaScript only (Object-Oriented / OOP)** — structured strictly using Object-Oriented Programming with ES6 classes, encapsulated component controllers, explicit lifecycles, and a clean component registry; no loose procedural scripts, no global floating functions, and no JS frameworks, libraries, or build tools (no React, Alpine, GSAP, etc.).
 - Static fixtures that resemble future Shopify data but contain no Liquid or Shopify API calls.
 - Stable semantic classes and `data-*` hooks that can survive Liquid conversion.
 - CSS custom properties for global visual roles.
@@ -376,6 +379,87 @@ Single source of truth for product card presentation everywhere (grids, search, 
 2. **Single Stylesheet**: All tokens, utility classes, and component rules reside strictly in `design/styles.css`.
 3. **No Inline Styling**: HTML templates must reference semantic classes or CSS custom properties—never inline `style="..."` or `<style>` blocks.
 4. **Color Scheme Scoping**: Color variables must be scoped to `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]` so components simply use `var(--[theme-slug]-color-background)`, etc., and react automatically to scheme changes.
+5. **Strict Zero Hardcoded Colors**: `design/styles.css` must **NEVER** contain hardcoded colors anywhere (no hex codes `#...`, `rgb()`, `rgba()`, `hsl()`, or named CSS colors like `black`, `white`, `red`). Every background, text, border, outline, shadow color, SVG fill/stroke, and badge color must strictly resolve through `var(--[theme-slug]-color-*)`.
+
+### JavaScript Architecture Rules (Object-Oriented / OOP)
+
+All interactive behaviors and client logic in `design/script.js` (and subsequent theme JavaScript) must strictly adhere to Object-Oriented Programming (OOP) principles:
+
+1. **ES6 Class Encapsulation**:
+   - Every interactive component or UI feature must be encapsulated in a dedicated ES6 class (e.g., `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`, `PredictiveSearch`, `FilterDrawer`, `ModalManager`, `Accordion`, `ToastNotification`, `QuickView`).
+   - Classes must manage their own DOM references, component state, event handlers, and ARIA accessibility attributes without leaking variables into the global scope.
+
+2. **Standardized Lifecycle Methods**:
+   - `constructor(element, options = {})`: Stores DOM element references, merges options/defaults, and initializes component state.
+   - `init()`: Sets up initial DOM states, creates mutation observers or ARIA attributes, and invokes `this.bindEvents()`.
+   - `bindEvents()`: Attaches event listeners with bound execution contexts (`this.handleEvent = this.handleEvent.bind(this)` or arrow class methods) and leverages event delegation where appropriate.
+   - `destroy()`: Cleans up all attached event listeners, observers, and DOM mutations when a component is dismantled or reloaded.
+
+3. **Component Registry & Auto-Initialization Bootstrap**:
+   - A central coordinator class or registry (e.g., `ThemeApp` or `ComponentRegistry`) discovers components via semantic DOM hooks or `data-component="..."` attributes on `DOMContentLoaded` and instantiates corresponding controller instances.
+   - Example OOP pattern:
+     ```javascript
+     class CartDrawer {
+       constructor(rootElement) {
+         this.drawer = rootElement;
+         this.openButtons = document.querySelectorAll('[data-cart-drawer-trigger]');
+         this.closeButtons = this.drawer.querySelectorAll('[data-cart-drawer-close]');
+         this.isOpen = false;
+         this.init();
+       }
+
+       init() {
+         this.bindEvents();
+       }
+
+       bindEvents() {
+         this.openButtons.forEach(btn => btn.addEventListener('click', () => this.open()));
+         this.closeButtons.forEach(btn => btn.addEventListener('click', () => this.close()));
+         this.drawer.addEventListener('keydown', (e) => {
+           if (e.key === 'Escape' && this.isOpen) this.close();
+         });
+       }
+
+       open() {
+         this.isOpen = true;
+         this.drawer.setAttribute('aria-hidden', 'false');
+         this.drawer.classList.add('is-open');
+         document.body.classList.add('overflow-hidden');
+       }
+
+       close() {
+         this.isOpen = false;
+         this.drawer.setAttribute('aria-hidden', 'true');
+         this.drawer.classList.remove('is-open');
+         document.body.classList.remove('overflow-hidden');
+       }
+
+       destroy() {
+         // Cleanup listeners
+       }
+     }
+
+     class ThemeApp {
+       constructor() {
+         this.components = new Map();
+       }
+
+       init() {
+         const drawerEl = document.querySelector('[data-component="cart-drawer"]');
+         if (drawerEl) this.components.set('cartDrawer', new CartDrawer(drawerEl));
+         // Register and instantiate additional OOP controllers...
+       }
+     }
+
+     document.addEventListener('DOMContentLoaded', () => {
+       window.themeApp = new ThemeApp();
+       window.themeApp.init();
+     });
+     ```
+
+4. **Zero Loose Procedural Scripts**:
+   - Never write loose global scripts, top-level event listeners, or inline scripts. All logic must belong to a class and be instantiated cleanly.
+
 
 ## Default Page Coverage
 
@@ -1214,7 +1298,7 @@ Execute the wiring map documented in `docs/shopify-wiring.md` to generate or upd
 - The design direction is documented with key visual characteristics.
 - The design workspace exists or an existing equivalent is documented.
 - All default page prototypes are represented.
-- All styles are consolidated strictly into the single shared CSS file (`design/styles.css`) and all client logic into `design/script.js`, with zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
+- All styles are consolidated strictly into the single shared CSS file (`design/styles.css`) with **zero hardcoded colors** (all colors strictly mapped to `--[theme-slug]-color-*` tokens and color scheme scopes), and all client logic into `design/script.js` written **strictly using Object-Oriented Programming (OOP)** ES6 classes with clean encapsulation, standardized lifecycles, and a component registry. Zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
 - `docs/theme-settings.md` contains a robust, project-derived global settings contract covering the nine canonical global categories, with 1:1 matching CSS custom properties (`--[theme-slug]-*`) defined in `design/styles.css`, including the full color scheme system with at least three schemes and role-to-token mappings.
 - Global header and footer are developed strictly in `design/index.html` without duplicating markup in secondary page prototypes.
 - `.shopifyignore` is created or updated in the project root to ignore `design/`, `docs/`, `AGENTS.md`, and `CLAUDE.md`.
