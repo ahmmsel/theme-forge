@@ -4,13 +4,13 @@
     {
       "id": 1,
       "prompt": "Run /theme-forge init in the current project for a bilingual English and Arabic furniture storefront called Cedar & Loom. Use the slug cedar-loom, support English and Arabic with RTL for Arabic, and create the design-first prototype structure and documentation without adding Shopify Liquid or homepage sections.",
-      "expected_output": "A preserved or newly created design-first workspace with the default page prototypes represented, docs/theme-settings.md containing the identity and global settings contract, docs/shopify-wiring.md as a not-started placeholder, and AGENTS.md with a CLAUDE.md symbolic link. The report identifies created, updated, skipped, and unresolved items.",
+      "expected_output": "A preserved or newly created design-first workspace with the default page prototypes represented, docs/theme-settings.md containing the identity and global settings contract, docs/shopify-wiring.md as a not-started placeholder, .shopifyignore configured for prototype/doc paths, and AGENTS.md with a CLAUDE.md symbolic link. The report identifies created, updated, skipped, and unresolved items.",
       "files": []
     },
     {
       "id": 2,
       "prompt": "Run /theme-forge wire against this existing Shopify prototype. Inspect the design/ and docs/ directories plus any Liquid, JSON, CSS, JavaScript, fixture, and app-integration files you find. Produce or update docs/shopify-wiring.md only; do not modify the prototype or Shopify production files. Clearly mark inferred and unresolved mappings.",
-      "expected_output": "A codebase-specific docs/shopify-wiring.md with all required mapping sections, observed/inferred/proposed confidence, classification labels, Shopify data paths, accessibility/localization risks, and a created/updated/skipped/unresolved completion report.",
+      "expected_output": "A codebase-specific docs/shopify-wiring.md providing a wiring map for global theme settings, sections, blocks, and templates with classification labels, schema targets, and a created/updated/skipped/unresolved completion report.",
       "files": []
     },
     {

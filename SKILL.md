@@ -1,7 +1,7 @@
 ---
 name: theme-forge
-description: "Use this skill whenever a user is starting, planning, auditing, or wiring a Shopify theme whose visual design is being developed outside Shopify, including requests to create a theme prototype, define merchant-facing settings, map HTML/CSS/JavaScript to Liquid, or produce a Shopify wiring report. Run /theme-forge init to create a theme-neutral design workspace, or /theme-forge wire to inspect an existing prototype and generate docs/shopify-wiring.md. Use it even when the user does not name Theme Forge but asks for a design-first Shopify theme workflow."
-compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Depends on the frontend-design skill from https://github.com/anthropics/skills for visual direction and UI refinement. Package manager access (npx) is required only for automatic installation during init when the companion skill is missing. No runtime, framework, or Shopify credentials required."
+description: "Use this skill whenever a user is starting, planning, auditing, or wiring a Shopify theme whose visual design is being developed outside Shopify, including requests to create a theme prototype, define merchant-facing settings, map HTML/CSS/JavaScript to Liquid, or produce a Shopify wiring map. Run /theme-forge init to create a theme-neutral design workspace, or /theme-forge wire to inspect an existing prototype and generate a map for wiring global theme settings, sections, blocks, and templates in docs/shopify-wiring.md. The wire command strictly produces this wiring map and does not perform implementation or prototype modifications."
+compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Self-contained with zero runtime, build tool, framework, package manager, or external skill dependencies. No Shopify credentials required."
 ---
 
 # Theme Forge
@@ -12,7 +12,7 @@ The skill is reusable across themes. A theme name, theme slug, category, visual 
 
 ## Portability and Invocation
 
-This is a plain Markdown skill. It does not require a runtime, build tool, MCP server, or design application. A package manager is only needed when `/theme-forge init` performs companion-skill auto-install.
+This is a plain Markdown skill. It does not require a runtime, build tool, MCP server, package manager, or external design application.
 
 When the host supports slash commands, use:
 
@@ -25,14 +25,11 @@ When the host does not support slash commands, interpret `init` and `wire` as th
 
 The skill must work from a project directory, not only from the directory where the skill file is installed. Resolve all project paths relative to the user's selected project root.
 
-Companion skill dependency:
+### Optional Design Skill Integration
 
-- Treat `frontend-design` as a required companion skill for visual design and UX shaping tasks.
-- Use `frontend-design` whenever the user asks for UI direction, layout systems, typography, color systems, motion, responsive behavior, accessibility polish, or interface critique.
-- Run `frontend-design` before drafting major prototype aesthetics, then apply its guidance while preserving Theme Forge's design-first and Shopify-wiring boundaries.
-- During `/theme-forge init`, if `frontend-design` is missing, install it automatically with `npx skills add https://github.com/anthropics/skills --skill frontend-design`.
-- If auto-install fails (missing `npx`, network/auth issues, or permission errors), continue init and report the install failure under `unresolved` with the exact command output and a manual retry command.
-- If the user explicitly says not to install dependencies in the current run, skip auto-install, continue init, and record `frontend-design` as `unresolved`.
+- If the `frontend-design` skill (or an equivalent frontend design skill) is installed and available in the environment, leverage it to guide visual direction, layout hierarchy, typography, color schemes, motion, and UI refinement when prototyping in `design/`.
+- If `frontend-design` is not installed, proceed normally using Theme Forge's built-in design principles. Do not fail, block, or attempt automatic package installation.
+- Always preserve Theme Forge boundaries: all styles must live strictly in `design/styles.css`, client scripts in `design/script.js`, with no inline styles/scripts and no Liquid in prototypes.
 
 ### Command selection
 
@@ -51,8 +48,8 @@ At the start of a command, state the selected project root and the files that wi
 - Create missing directories and files only when they are part of the requested command output.
 - If a target file already exists, preserve its content and make the smallest compatible update. Report what was preserved and what changed.
 - Do not modify Shopify production files during `wire`.
+- The `wire` command is strictly limited to generating the wiring map (mapping global theme settings, sections, blocks, and templates) in `docs/shopify-wiring.md`; do not perform code implementation, Liquid file generation, or prototype modifications.
 - Do not add dependencies, build tools, frameworks, design systems, or remote assets unless explicitly requested.
-- Exception: installing `frontend-design` during `/theme-forge init` is allowed as part of this skill's declared dependency workflow.
 - Do not invent Shopify capabilities. Mark uncertain mappings as `unresolved` and explain what must be verified.
 - At the end of either command, report created files, updated files, skipped files, and unresolved decisions.
 
@@ -88,14 +85,13 @@ Initialization root rule: run `/theme-forge init` against the selected project r
 Use this order:
 
 1. Inspect the project root and identify existing design, docs, assets, Shopify, and configuration directories.
-2. Check whether `frontend-design` is installed and available.
-3. If missing, run `npx skills add https://github.com/anthropics/skills --skill frontend-design` before continuing, unless the user explicitly requested no install for this run.
-4. Re-check companion-skill availability and record success or failure.
-5. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
-6. Create only missing directories and files.
-7. Write the settings contract and wiring placeholder using the requested identity.
-8. Create `AGENTS.md` in the project root with agent guidelines and project conventions, then create a `CLAUDE.md` relative symbolic link pointing to `AGENTS.md`.
-9. Summarize created, updated, skipped, and unresolved items.
+2. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
+3. Create only missing directories and files.
+4. Write the settings contract and wiring placeholder using the requested identity.
+5. Derive the global settings contract from the project itself: inspect existing brand assets, styles, fixtures, fonts, spacing, radii, shadows, and any pre-existing CSS or tokens before writing `docs/theme-settings.md`. The contract must cover every visual dimension the prototype will need, not a minimal starter set.
+6. Create or update `.shopifyignore` in the project root to ensure Shopify CLI ignores prototype and documentation files.
+7. Create or update `AGENTS.md` in the project root with agent guidelines, prototype boundaries, and instructions for using `design/` and `docs/shopify-wiring.md` for Shopify wiring when requested, then ensure a `CLAUDE.md` relative symbolic link points to `AGENTS.md`.
+8. Summarize created, updated, skipped, and unresolved items.
 
 ```text
 design/
@@ -122,6 +118,7 @@ docs/
   theme-settings.md
   shopify-wiring.md
 
+.shopifyignore
 AGENTS.md
 CLAUDE.md -> AGENTS.md
 ```
@@ -140,26 +137,51 @@ Add or update `docs/theme-settings.md` with:
 
 Add `docs/shopify-wiring.md` as a placeholder only when it does not exist. It must contain the theme identity, date, source directories, inspection status (`not started`), and a note that `/theme-forge wire` must be run after the prototype is sufficiently complete. If the file already contains a wiring report, do not replace it during `init`.
 
+#### `.shopifyignore` Configuration
+
+Create `.shopifyignore` in the project root if it does not exist, or append missing entries to an existing `.shopifyignore` so that Shopify CLI commands (`shopify theme dev`, `shopify theme push`, `shopify theme check`) strictly ignore prototype, documentation, and agent files:
+
+```text
+# Theme Forge Prototype & Documentation
+design/
+docs/
+AGENTS.md
+CLAUDE.md
+```
+
 #### `AGENTS.md` and `CLAUDE.md` Symbolic Link
 
-Create `AGENTS.md` in the project root and create a symbolic link `CLAUDE.md` pointing to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`).
+Create `AGENTS.md` in the project root if it does not exist, or update an existing `AGENTS.md` (such as in an existing Shopify theme project) by preserving existing instructions and appending/merging the Theme Forge conventions. Create a symbolic link `CLAUDE.md` pointing to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`) if missing.
 
-`AGENTS.md` serves as persistent guidance for coding agents working on the theme prototype. It must contain:
+`AGENTS.md` serves as persistent guidance for coding agents working on the theme prototype and subsequent wiring. It must contain:
 
 1. **Theme Identity & Overview**: Theme name, slug, category, supported languages, RTL direction requirements, and chosen design direction.
 2. **Design-First Architecture & Boundaries**:
    - Visual prototyping is strictly confined to `design/`.
-   - No Liquid, Shopify API endpoints, build systems, CSS frameworks, or JavaScript libraries in the prototype.
+   - No Liquid, Shopify API endpoints, build systems, CSS frameworks, or JavaScript libraries in `design/`.
    - Clean, semantic HTML5, vanilla CSS with CSS custom properties (`--[theme-slug]-*`), and vanilla JS for client interactions.
+   - Single stylesheet and script rule: all styles across the prototype must live strictly in the single shared CSS file (`design/styles.css`) and all JavaScript in the single shared JS file (`design/script.js`). Never use inline CSS (`style` attributes or `<style>` blocks) or inline JavaScript (event handlers like `onclick` or inline `<script>` blocks) inside HTML pages.
+   - **Single Header & Footer Rule**: The global `<header>` (announcement bar, navigation, logo, cart trigger, etc.) and `<footer>` (links, newsletter, copyright, disclosures) must **strictly only be developed in `design/index.html`** (the shared shell). Never duplicate full header and footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, etc.); secondary pages contain only their page-specific `<main>` template content to prevent duplication and maintenance divergence.
    - Bidirectional-safe layout with logical CSS properties (`inline-start`/`inline-end`).
-3. **Workspace Directory Map**: Explanation of `design/` (prototypes, styles, scripts, fixtures), `docs/` (`theme-settings.md`, `shopify-wiring.md`), and root files.
+3. **Workspace Directory Map**:
+   - `design/`: Isolated pure HTML/CSS/JS prototypes, styles, scripts, fixtures.
+   - `docs/`: `theme-settings.md` (global settings contract) and `shopify-wiring.md` (wiring map for Shopify implementation).
+   - Shopify production directories (when co-located in a Shopify theme): `sections/`, `snippets/`, `templates/`, `layout/`, `config/`, `assets/`, `locales/`.
 4. **Theme Forge Commands**:
-   - `/theme-forge init`: Initialize/scaffold prototype workspace.
-   - `/theme-forge wire`: Inspect prototype and generate `docs/shopify-wiring.md` without changing prototype files.
-5. **Modification & Safety Rules**:
+   - `/theme-forge init`: Initialize or update prototype workspace and global settings contract.
+   - `/theme-forge wire`: Inspect prototype and generate the wiring map in `docs/shopify-wiring.md` (mapping global theme settings, sections, blocks, and templates) without modifying prototype files or writing theme code.
+5. **Shopify Wiring & Implementation Workflow (When Requested by User)**:
+   - When the user asks to wire or implement the Shopify theme based on the prototype:
+     - Consult `docs/shopify-wiring.md` as the authoritative implementation guide.
+     - Implement global theme settings in `config/settings_schema.json` using the mapped IDs, types, and `color_scheme_group` roles.
+     - Build Liquid sections in `sections/*.liquid` and blocks conforming to the mapped schemas and data sources in `docs/shopify-wiring.md`.
+     - Implement JSON templates in `templates/*.json` following the page-to-template map and section composition.
+     - Do not modify files in `design/` during theme wiring unless the user explicitly requests changes to the visual prototype.
+6. **Modification & Safety Rules**:
    - Never overwrite user files without confirmation.
-   - Do not modify prototype files during `wire` inspections.
+   - Do not modify prototype files or write Shopify theme code during `wire` inspections; strictly generate the wiring map.
    - Keep settings documented in `docs/theme-settings.md` synchronized with CSS tokens.
+   - Route all colors through the documented color scheme roles and tokens; never introduce hard-coded colors or per-component color values.
 
 For the `CLAUDE.md` symbolic link:
 - Create it in the project root pointing to `AGENTS.md` via `ln -s AGENTS.md CLAUDE.md` or equivalent filesystem operation.
@@ -174,7 +196,9 @@ Do not build homepage sections or blocks during initialization. `design/index.ht
 
 The prototype must use:
 
-- Plain HTML files, one shared CSS file, and one shared JavaScript file.
+- Plain HTML files, exactly one shared CSS file (`design/styles.css`), and exactly one shared JavaScript file (`design/script.js`).
+- Single stylesheet rule: every style across the prototype must reside in the single shared CSS file (`design/styles.css`). Never write or inject inline CSS (using `style` attributes or `<style>` blocks) or inline JavaScript (using event attributes like `onclick` or inline `<script>` blocks) inside any HTML page.
+- Single header and footer source of truth: Develop the global `<header>` and `<footer>` **strictly in `design/index.html`** (the shared shell). Never duplicate header or footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.). All other prototype pages focus purely on their page-specific `<main>` content to eliminate duplication and maintenance overhead.
 - Plain CSS only — no CSS frameworks, preprocessors, or utility libraries (no Tailwind, Bootstrap, etc.).
 - Vanilla JavaScript only — no JS frameworks, libraries, or build tools (no React, Alpine, GSAP, etc.).
 - Static fixtures that resemble future Shopify data but contain no Liquid or Shopify API calls.
@@ -208,6 +232,14 @@ Record the chosen direction in `docs/theme-settings.md` under a Design Direction
 
 `docs/theme-settings.md` is the primary output of `/theme-forge init`. It must describe settings by their design effect, not by HTML structure.
 
+The contract must be robust and project-derived:
+
+- Derive every setting from what the project actually contains — its design direction, category, fixtures, and visual language — not from a generic template.
+- The contract must be complete enough that a merchant could restyle the entire storefront (brand, colors, typography, layout, components, commerce surfaces) without touching code. If a prototype behavior or visual role exists but has no corresponding setting or documented decision to keep it code-level, the contract is incomplete.
+- Cover all recommended global groups below; when a group does not apply to this project's category, record it as `not-applicable` with a reason instead of silently omitting it.
+- Every default page in the coverage table must be traceable to at least one global group that affects it.
+- Keep the contract forward-compatible with Shopify's `config/settings_schema.json`: stable IDs, control types, defaults, and ranges must be expressible as a real theme editor schema.
+
 Every proposed setting needs:
 
 - Stable Shopify-safe ID using `snake_case`.
@@ -221,20 +253,113 @@ Every proposed setting needs:
 - Fallback when unset or unsupported.
 - Wiring status: pending, native, Liquid, schema, AJAX, app-dependent, metafield-dependent, or implementation-only.
 
-### Recommended global groups
+### The Nine Canonical Global Settings Categories
 
-These are recommendations, not mandatory categories. Add, merge, or rename groups when the theme needs it.
+The global theme settings contract consolidates all global storefront controls into **nine non-overlapping categories**. Typography drops redundant per-element font pickers in favor of **four reusable type roles** (`display`, `heading`, `body`, `accent`), and colors route entirely through Shopify's native `color_scheme_group` system.
 
-- **Brand:** logo, alternate logo, logo width, favicon, social links.
-- **Color:** reusable color schemes and semantic roles such as background, text, muted text, borders, links, icons, buttons, badges, success, warning, and error.
-- **Typography:** display, heading, body, and accent roles, each with font, scale, line height, letter spacing, and case where Shopify supports the control.
-- **Layout:** page width, content gutters, spacing scale, media ratios, container variants, corner-radius preset, and bidirectional-safe spacing/margins.
-- **Buttons and forms:** button style, arrow behavior, field style, focus-ring style, and density where the merchant needs control.
-- **Cards and media:** product, collection, and article card defaults; image ratio, fit, metadata, badges, swatches, and hover behavior.
-- **Cart and discovery:** cart page, cart drawer, cart mode, drawer behavior, cart fields, shipping progress, search modal, predictive search, quick actions, pagination, and recently viewed behavior.
-- **Navigation and behavior:** sticky and overlay header behavior, menus, selectors, account access, breadcrumbs, back-to-top, external links, reduced motion, bidirectional layout, and prose treatment.
+Every setting must have a corresponding CSS custom property using the `--[theme-slug]-*` namespace so that static prototype styles map 1:1 to theme settings and Liquid schema tokens.
 
-Do not expose implementation details as settings merely because they are technically configurable. A setting belongs in the global contract only when a merchant can understand its outcome and reasonably needs to change it across the storefront.
+#### 1. Brand (`--[theme-slug]-brand-*`)
+- **Logo** (image picker)
+- **Logo — Dark Mode variant** (image picker)
+- **Logo width** (range in px) -> `--[theme-slug]-brand-logo-width`
+- **Favicon** (image picker)
+- **Social accounts** (text inputs for Instagram, Facebook, TikTok, Pinterest, YouTube, X, LinkedIn, Snapchat, Tumblr, Vimeo)
+
+#### 2. Color System (`--[theme-slug]-color-*`)
+- **Color Scheme Group** — one native Shopify `color_scheme_group` defined once in `settings_schema.json`. Every scheme carries definition inputs for: background (solid or gradient), text, primary button, secondary button, primary button border, secondary button border, on-primary button text, on-secondary button text, links, and icons. Default schemes: **Primary, Secondary, Contrast**.
+  - Scheme CSS Variables (scoped to `[data-color-scheme="..."]` or `:root`):
+    - `--[theme-slug]-color-background`
+    - `--[theme-slug]-color-background-gradient`
+    - `--[theme-slug]-color-text`
+    - `--[theme-slug]-color-primary-button`
+    - `--[theme-slug]-color-primary-button-border`
+    - `--[theme-slug]-color-on-primary-button`
+    - `--[theme-slug]-color-secondary-button`
+    - `--[theme-slug]-color-secondary-button-border`
+    - `--[theme-slug]-color-on-secondary-button`
+    - `--[theme-slug]-color-links`
+    - `--[theme-slug]-color-icons`
+- **Shared Color Scheme control**: Any section, block, card, drawer, or modal selects a scheme via a `color_scheme` type setting rather than storing individual color pickers.
+- **Badge Colors**:
+  - Sale Badge Colors (background / text) -> `--[theme-slug]-color-badge-sale-bg`, `--[theme-slug]-color-badge-sale-text`
+  - Sold Out Badge Colors (background / text) -> `--[theme-slug]-color-badge-soldout-bg`, `--[theme-slug]-color-badge-soldout-text`
+  - Custom Badge Colors (background / text; paired with `badge.custom` metafield) -> `--[theme-slug]-color-badge-custom-bg`, `--[theme-slug]-color-badge-custom-text`
+
+#### 3. Typography System (`--[theme-slug]-type-[role]-*`)
+Four **type roles** replace fragmented font pickers. Every heading, label, button, and body text is assigned one role by default:
+- **Display**: Hero banner, slideshow, large marketing headlines
+- **Heading**: Section headings, page titles, H1–H6
+- **Body**: Paragraphs, descriptions, long-form content
+- **Accent**: Eyebrows, buttons, badges, nav labels, product card meta (short, uppercase-leaning UI text)
+
+Each role exposes and maps to CSS custom properties:
+- Font family -> `--[theme-slug]-type-[role]-font-family`
+- Size Scale (`XS` – `XL`, five steps) -> `--[theme-slug]-type-[role]-font-size`
+- Letter Spacing -> `--[theme-slug]-type-[role]-letter-spacing`
+- Line Height -> `--[theme-slug]-type-[role]-line-height`
+- Text Case (`none`, `uppercase`, `lowercase`, `capitalize`) -> `--[theme-slug]-type-[role]-text-transform`
+
+#### 4. Buttons & Corners (`--[theme-slug]-radius-*` & `--[theme-slug]-button-*`)
+- **Default Button Style**: Solid, Outline, Text
+- **Show arrow icon by default**: boolean
+- **Corner Radius Preset**: Sharp (`0px`), Soft (`4px`–`8px`), Round (`12px`–`16px`), Pill (`9999px`) applied to buttons, cards, media, inputs, and popups:
+  - `--[theme-slug]-radius-base`
+  - `--[theme-slug]-radius-button`
+  - `--[theme-slug]-radius-card`
+  - `--[theme-slug]-radius-media`
+  - `--[theme-slug]-radius-input`
+  - `--[theme-slug]-radius-popup`
+- **Advanced overrides**: toggle to independently adjust button and media radii.
+
+#### 5. Product Card (`--[theme-slug]-product-card-*`)
+Single source of truth for product card presentation everywhere (grids, search, cart upsell, recommendations):
+- Aspect Ratio (Portrait, Square, Landscape) -> `--[theme-slug]-product-card-aspect-ratio`
+- Image Fit (Cover, Contain) -> `--[theme-slug]-product-card-image-fit`
+- Show secondary image on hover
+- Enable hover effect
+- Show vendor
+- Show SKU
+- Show collection label
+- Show color swatches (from variants) + swatch size -> `--[theme-slug]-product-card-swatch-size`
+- Show product rating (reads from reviews app or `reviews.rating` metafield)
+- Sale Badge (show, format: Text only / Text + percentage)
+- Sold Out Badge (show)
+- Custom Badge (show, requires `badge.custom` single-line-text metafield)
+
+#### 6. Layout & Spacing (`--[theme-slug]-layout-*` & `--[theme-slug]-spacing-*`)
+- **Page Width**: theme's max content width -> `--[theme-slug]-page-width`
+- **Section Spacing Scale**: defines pixel values for `Tight`, `Default`, `Loose`, `Extra Loose` -> `--[theme-slug]-spacing-section` (consumed by all section Space Above / Space Below controls)
+- **Media Corner Radius override**: overrides `--[theme-slug]-radius-media` when enabled
+
+#### 7. Cart (`--[theme-slug]-cart-*`)
+- **Cart Behavior**: Drawer or Page
+- **Open drawer automatically on add to cart**: boolean
+- **Drawer: show order note field**: boolean
+- **Drawer: show discount code field**: boolean
+- **Free Shipping Progress Bar**: show, and threshold amount -> `--[theme-slug]-cart-free-shipping-threshold`
+- **Cart Upsell**: heading, product source (rendered via shared Product Card component)
+
+#### 8. Search & Discovery (`--[theme-slug]-discovery-*` / `--[theme-slug]-search-*`)
+- **Quick Actions**: action on card (`none`, `quick_view`, `quick_add`), button style, visibility (`always`, `hover`), enabled on mobile
+- **Search Modal**: enable boolean
+- **Predictive Results**: enable, show product / collection / article suggestions
+- **Empty Search Suggestions**: heading, curated product list
+- **Pagination Style**: Numbered Pages, Load More Button, Infinite Scroll
+- **Load More Button Style**: button style variant
+- **Recently Viewed**: tracking duration (days), track after Quick View
+
+#### 9. Accessibility & Behavior (`--[theme-slug]-prose-*` & `--[theme-slug]-behavior-*`)
+- **Show back-to-top button**: boolean
+- **Show breadcrumbs**: boolean
+- **Open external links in a new tab**: boolean
+- **Prose Style**: Custom, Standard (governs long-form rich text typography) -> `--[theme-slug]-prose-style`
+
+### CSS Variable & Token Architecture Rules
+1. **1:1 Alignment**: Every visual setting in the 9 categories must have an exact matching CSS custom property in `design/styles.css`.
+2. **Single Stylesheet**: All tokens, utility classes, and component rules reside strictly in `design/styles.css`.
+3. **No Inline Styling**: HTML templates must reference semantic classes or CSS custom properties—never inline `style="..."` or `<style>` blocks.
+4. **Color Scheme Scoping**: Color variables must be scoped to `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]` so components simply use `var(--[theme-slug]-color-background)`, etc., and react automatically to scheme changes.
 
 ## Default Page Coverage
 
@@ -724,88 +849,38 @@ The report must distinguish observed facts from recommendations. Use `observed`,
 
 ## `/theme-forge wire`
 
-Generate or update `docs/shopify-wiring.md` from the current codebase. This command is an investigation, not a blind conversion and not a request to implement Liquid files.
+Generate or update `docs/shopify-wiring.md` from the current codebase. The `/theme-forge wire` command serves one dedicated purpose: **produce a wiring map that maps global theme settings, sections, blocks, and templates to Shopify**. It is strictly a mapping and specification document. Do not do more than this: do not perform code implementation, do not create or modify Liquid/Shopify files, and do not modify prototype files.
 
 Before writing, inspect the project and identify:
 
-- HTML pages and their shared shell.
-- CSS custom properties, token groups, media queries, and component selectors.
-- JavaScript behavior, state attributes, event hooks, forms, dialogs, and network calls.
-- Product, collection, article, cart, account, search, contact, password, and gift-card fixtures.
-- Existing Liquid files, Shopify schemas, templates, snippets, locales, metafield references, app integrations, or theme configuration if present.
-- Sections and blocks if they already exist, without assuming they are the source of truth for the design.
-- Accessibility and localization behavior visible in the codebase.
+- Global settings documented in `docs/theme-settings.md` and CSS custom properties (`--[theme-slug]-*`) in `design/styles.css`.
+- Color schemes, roles, and tokens.
+- HTML pages in `design/` and their layout structure.
+- Prototype components, sections, and blocks.
+- Existing Liquid files, Shopify schemas, templates, snippets, or fixtures if present.
 
 ### Wiring document requirements
 
-Write `docs/shopify-wiring.md` with these sections:
+Write `docs/shopify-wiring.md` with these focused sections:
 
 1. **Project identity and inspection scope**
-   - Theme name, slug, category, inspected paths, and date.
-   - What was found and what was absent.
+   - Theme name, slug, category, inspected paths, and inspection date.
 
-2. **Global settings map**
-   - Every documented setting and every discovered CSS token.
-   - Proposed `config/settings_schema.json` ID and control type.
-   - Whether it belongs in global settings or a section/template schema.
-   - Default, fallback, CSS output, and affected pages.
-   - Confidence and unresolved questions.
+2. **Global theme settings wiring map**
+   - Map every global setting and CSS token (`--[theme-slug]-*`) to `config/settings_schema.json`.
+   - Proposed schema category, setting ID (`snake_case`), Shopify control type, default value, and CSS custom property output.
+   - Proposed `color_scheme_group` definition mapping semantic color roles to tokens across default schemes (Primary, Secondary, Contrast).
 
-3. **Token-to-Shopify map**
-   - CSS custom property.
-   - Source setting or Liquid value.
-   - Where it should be emitted.
-   - Whether it needs a color scheme, font picker, range, select, checkbox, image, URL, or text setting.
-   - Tokens that must remain code-level.
+3. **Sections and blocks wiring map**
+   - Map prototype UI components, sections, and blocks to Shopify Liquid sections (`sections/*.liquid`) and blocks.
+   - Proposed section/block settings, presets, block types, data sources, and shared snippet dependencies.
 
-4. **Page-to-template map**
-   - Each default prototype page.
-   - Shopify template target.
-   - Required Liquid objects, filters, forms, routes, and fallback content.
-   - Template limitations or special handling.
+4. **Page-to-template wiring map**
+   - Map each default prototype page (`index.html`, `product.html`, `collection.html`, `cart.html`, etc.) to its Shopify JSON template target (`templates/*.json`).
+   - Required Liquid objects, forms, routes, and template section structure.
 
-5. **Section and block map**
-   - Existing sections and blocks only.
-   - Their settings, data sources, shared snippets, and template availability.
-   - Items intentionally deferred for later homepage design.
-
-6. **Behavior and JavaScript map**
-   - Prototype behavior.
-   - Shopify implementation target such as native HTML, Liquid, theme JavaScript, AJAX API, or app.
-   - Progressive-enhancement fallback.
-   - Loading, error, and failure behavior.
-
-7. **Data and integration dependencies**
-   - Native Shopify data.
-   - Metafields.
-   - Shopify apps.
-   - Customer/account requirements.
-   - External services.
-   - Missing data and fallback rules.
-
-8. **What not to wire**
-   - Internal class names, DOM mechanics, breakpoints, animation internals, test hooks, fixture data, and other code-level details.
-   - Explain any exception where a merchant-facing setting is justified.
-
-9. **Risks and decisions**
-   - Shopify schema limitations.
-   - Unsupported or app-dependent behavior.
-   - Localization and bidirectional layout risks (hard-coded left/right, directional icons, asymmetric spacing).
-   - Accessibility and performance risks.
-   - Conflicts between the prototype and Shopify's data model.
-
-10. **Recommended implementation order**
-    - Settings and token foundation first.
-    - Shared shell and reusable snippets next.
-    - Commerce-critical templates next.
-    - Homepage sections and blocks only after their separate design work.
-
-11. **Inspection summary**
-
-- Files inspected.
-- Files intentionally ignored.
-- Files not found but expected.
-- Commands or external documentation still needed for verification.
+5. **Unresolved wiring & notes**
+   - Ambiguous settings, unsupported prototype features, or decisions required before theme development.
 
 ### Classification vocabulary
 
@@ -821,16 +896,14 @@ Use one or more of these labels for every mapped item:
 - `not-applicable`: prototype-only or irrelevant to Shopify output.
 - `unresolved`: needs a decision or validation before implementation.
 
-### Rules for accurate wiring
+### Rules for wire command
 
-- Do not claim a feature is native without checking the current Shopify theme and Liquid capabilities.
-- Do not convert every CSS token into a merchant setting. Preserve code-level tokens when exposing them would add noise or weaken consistency.
-- Do not put global concerns into every section schema. Use global settings for genuinely site-wide behavior and section settings for local composition.
-- Do not assume a prototype fixture has a direct Shopify equivalent. Record the actual object, route, form, endpoint, app, or metafield required.
-- Do not silently remove prototype behavior. Mark it unsupported, deferred, app-dependent, or unresolved.
-- Do not modify the design prototype during `/theme-forge wire` unless the user explicitly asks for implementation changes.
-- Do not claim that a wiring report is a Shopify-valid implementation. It is an implementation map that must be validated during theme development.
-- Preserve an existing report's decisions and history when updating it; revise stale findings in place and add an `Updated` date.
+- The wire command must ONLY produce the wiring map for global theme settings, sections, blocks, and templates. Do not do more than this.
+- Do not perform code implementation or generate Liquid template files.
+- Do not modify prototype files in `design/` during `/theme-forge wire`.
+- Do not convert every CSS token into a merchant setting; preserve internal code-level tokens where exposing them adds noise.
+- Route all colors through the `color_scheme_group` rather than standalone per-section color pickers.
+- Mark uncertain mappings as `unresolved`.
 
 ## Completion Criteria
 
@@ -840,17 +913,19 @@ Use one or more of these labels for every mapped item:
 - The design direction is documented with key visual characteristics.
 - The design workspace exists or an existing equivalent is documented.
 - All default page prototypes are represented.
-- `docs/theme-settings.md` contains a stable initial global settings contract.
-- `AGENTS.md` is created in the project root with the theme conventions and agent instructions.
+- All styles are consolidated strictly into the single shared CSS file (`design/styles.css`) and all client logic into `design/script.js`, with zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
+- `docs/theme-settings.md` contains a robust, project-derived global settings contract covering the nine canonical global categories, with 1:1 matching CSS custom properties (`--[theme-slug]-*`) defined in `design/styles.css`, including the full color scheme system with at least three schemes and role-to-token mappings.
+- Global header and footer are developed strictly in `design/index.html` without duplicating markup in secondary page prototypes.
+- `.shopifyignore` is created or updated in the project root to ignore `design/`, `docs/`, `AGENTS.md`, and `CLAUDE.md`.
+- `AGENTS.md` is created or updated in the project root with the theme conventions, prototype awareness (`design/`, `docs/`), and Shopify wiring guidance.
 - `CLAUDE.md` is created as a symbolic link pointing to `AGENTS.md`.
 - The prototype remains independent of Liquid, Shopify APIs, and any external frameworks.
 - No homepage sections or blocks were invented prematurely.
 
 `/theme-forge wire` is complete when:
 
-- `docs/shopify-wiring.md` reflects the inspected codebase rather than generic assumptions.
-- Every global setting and CSS token has a wiring decision or an explicit unresolved status.
-- Every default page has a Shopify target and data-path summary.
-- Existing sections and blocks are mapped without becoming the design authority.
-- Shopify, app, metafield, AJAX, localization, accessibility, and performance dependencies are visible.
-- Implementation-only details are clearly excluded from merchant settings.
+- `docs/shopify-wiring.md` contains a complete wiring map for global theme settings, sections, blocks, and templates based on the inspected codebase.
+- Global theme settings and CSS tokens are mapped to `config/settings_schema.json` and color scheme definitions.
+- Prototype sections, blocks, and default pages are mapped to Shopify equivalents with schema and data bindings.
+- Unresolved or ambiguous items are explicitly documented.
+- No prototype or Shopify production files were modified.
