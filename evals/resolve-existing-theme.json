@@ -1,6 +1,6 @@
 {
   "eval_id": 4,
   "eval_name": "resolve-existing-theme",
-  "prompt": "Run /theme-forge resolve in the current project to audit and reconcile our existing prototype against the latest skill rules. Replace all hardcoded colors in design/styles.css with semantic CSS custom properties, refactor procedural scripts in design/script.js into ES6 OOP classes with a component registry, strip duplicate header/footer markup from secondary HTML pages to maintain a single shell in index.html, ensure RTL logical properties, and synchronize docs/theme-settings.md.",
+  "prompt": "Run /theme-forge resolve in the current project to migrate any legacy standalone design folders (design/, docs/) into the theme-embedded structure (.design/, .docs/) and audit/reconcile our prototype against the latest skill rules: replace all hardcoded colors in .design/styles.css with semantic CSS custom properties, refactor procedural scripts in .design/script.js into ES6 OOP classes with a component registry, strip duplicate header/footer markup from secondary HTML pages to maintain a single shell in .design/index.html, ensure RTL logical properties, and synchronize .docs/theme-settings.md.",
   "assertions": []
 }

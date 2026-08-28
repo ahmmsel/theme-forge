@@ -3,26 +3,32 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Run /theme-forge init in the current project for a bilingual English and Arabic furniture storefront called Cedar & Loom. Use the slug cedar-loom, support English and Arabic with RTL for Arabic, and create the standalone design-first prototype structure and documentation without adding Shopify Liquid or theme directories.",
-      "expected_output": "A preserved or newly created standalone design-first workspace with the default page prototypes represented, docs/theme-settings.md containing the identity and 9-category global settings contract, .shopifyignore configured for prototype/doc paths, and AGENTS.md with a CLAUDE.md symbolic link. The report identifies created, updated, skipped, and unresolved items.",
+      "prompt": "Run /theme-forge init in the current project for a bilingual English and Arabic furniture storefront called Cedar & Loom. Use the slug cedar-loom, support English and Arabic with RTL for Arabic, and create the theme-embedded design-first prototype structure (.design/ and .docs/) and documentation directly in the Shopify theme directory.",
+      "expected_output": "A preserved or newly created theme-embedded design workspace (.design/) with the default page prototypes represented, .docs/theme-settings.md containing the identity and 9-category global settings contract, .shopifyignore configured for .design/ and .docs/ paths, and AGENTS.md with a CLAUDE.md symbolic link instructing agents on the theme design system. The report identifies created, updated, skipped, and unresolved items.",
       "files": []
     },
     {
       "id": 2,
-      "prompt": "Run /theme-forge init-agents against this existing project. Inspect the workspace and generate or refresh AGENTS.md and CLAUDE.md scoped strictly to the standalone design prototype rules (tokenized CSS, zero hardcoded colors, OOP JavaScript, single stylesheet, single shell) without modifying or resetting existing design or fixture files.",
-      "expected_output": "An inspected existing project where AGENTS.md is created or updated with complete standalone design prototype guidance, CLAUDE.md is linked via symlink, .shopifyignore is configured, and no existing HTML, CSS, JavaScript, or fixture files are altered. A created/updated/skipped/unresolved completion report is output.",
+      "prompt": "Run /theme-forge init-agents against this existing Shopify theme project. Inspect the workspace and generate or refresh AGENTS.md and CLAUDE.md informing agents of the theme design contract in .design/ and .docs/ (tokenized CSS, zero hardcoded colors, OOP JavaScript, single stylesheet, single shell) and how to implement it across Liquid theme files without modifying or resetting existing design or theme files.",
+      "expected_output": "An inspected existing project where AGENTS.md is created or updated with complete theme-aware design guidance referencing .design/ and .docs/, CLAUDE.md is linked via symlink, .shopifyignore is configured, and no existing HTML, CSS, JavaScript, fixture, or Liquid files are altered. A created/updated/skipped/unresolved completion report is output.",
       "files": []
     },
     {
       "id": 3,
-      "prompt": "I want to use Theme Forge for a storefront design prototype, but I have not said whether to initialize a new prototype or configure agent guidance for an existing project. What should I do next? Do not inspect or change files yet.",
+      "prompt": "I want to use Theme Forge for a storefront design prototype in my Shopify theme, but I have not said whether to initialize a new embedded prototype, configure agent guidance for an existing theme, or resolve/migrate a project. What should I do next? Do not inspect or change files yet.",
       "expected_output": "A concise explanation of /theme-forge init, /theme-forge init-agents (or /theme-forge agents), and /theme-forge resolve, followed by a question asking the user to choose one. No files are created or modified.",
       "files": []
     },
     {
       "id": 4,
-      "prompt": "Run /theme-forge resolve in the current project to audit and reconcile our existing prototype against the latest skill rules. Replace all hardcoded colors in design/styles.css with semantic CSS custom properties, refactor procedural scripts in design/script.js into ES6 OOP classes with a component registry, strip duplicate header/footer markup from secondary HTML pages to maintain a single shell in index.html, ensure RTL logical properties, and synchronize docs/theme-settings.md.",
-      "expected_output": "An audited and reconciled existing prototype workspace where hardcoded colors in styles.css are converted to semantic tokens across color schemes, JS in script.js is refactored into ES6 OOP classes with lifecycles and a central registry, duplicate headers/footers in secondary HTML pages are stripped leaving only clean main content, logical CSS properties are enforced, docs/theme-settings.md is synchronized, and a detailed completion report is provided.",
+      "prompt": "Run /theme-forge resolve in the current project to migrate any legacy standalone design folders (design/, docs/) into the theme-embedded structure (.design/, .docs/) and audit/reconcile our prototype against the latest skill rules: replace all hardcoded colors in .design/styles.css with semantic CSS custom properties, refactor procedural scripts in .design/script.js into ES6 OOP classes with a component registry, strip duplicate header/footer markup from secondary HTML pages to maintain a single shell in .design/index.html, ensure RTL logical properties, and synchronize .docs/theme-settings.md.",
+      "expected_output": "An audited, migrated, and reconciled theme prototype workspace where legacy standalone directories (if present) are converted to .design/ and .docs/, hardcoded colors in .design/styles.css are converted to semantic tokens across color schemes, JS in .design/script.js is refactored into ES6 OOP classes with lifecycles and a central registry, duplicate headers/footers in secondary HTML pages are stripped leaving only clean main content, logical CSS properties are enforced, .docs/theme-settings.md is synchronized, AGENTS.md is updated, and a detailed completion report is provided.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Run /theme-forge init in an empty folder or a repository that has no Shopify theme structure (no layout/, templates/, sections/, snippets/, or config/). How should the skill respond?",
+      "expected_output": "The skill inspects the workspace, detects no Shopify theme structure, halts execution immediately without asking theme questions or creating .design/, .docs/, AGENTS.md, or .shopifyignore files, and outputs a clear error explaining that Theme Forge requires an existing Shopify theme directory with guidance on scaffolding a theme via Shopify CLI (`shopify theme init`).",
       "files": []
     }
   ]

@@ -1,0 +1,6 @@
+{
+  "eval_id": 5,
+  "eval_name": "init-non-theme-rejection",
+  "prompt": "Run /theme-forge init in an empty folder or a repository that has no Shopify theme structure (no layout/, templates/, sections/, snippets/, or config/). How should the skill respond?",
+  "assertions": []
+}

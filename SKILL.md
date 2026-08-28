@@ -1,14 +1,14 @@
 ---
 name: theme-forge
-description: "Use this skill whenever a user is starting, planning, auditing, developing, or reconciling a standalone eCommerce / Shopify storefront design prototype outside a Shopify theme directory. Run /theme-forge init to scaffold a new standalone prototype workspace (HTML/CSS/JS, tokens, documentation, AGENTS.md, CLAUDE.md), /theme-forge init-agents (or /theme-forge agents) to initialize or refresh agent guidance files in an existing project, or /theme-forge resolve to audit, reconcile, and resolve an existing theme prototype with updated skill rules, token architecture, OOP JS, and design integrations."
+description: "Use this skill whenever a user is starting, planning, auditing, developing, or reconciling an eCommerce / Shopify storefront design system directly within a Shopify theme directory. Run /theme-forge init to scaffold the embedded design workspace (.design/, .docs/, tokens, AGENTS.md, CLAUDE.md), /theme-forge init-agents (or /theme-forge agents) to initialize or refresh agent guidance files in an existing theme project, or /theme-forge resolve to audit, reconcile, and resolve existing theme prototypes or migrate legacy standalone projects into the theme-embedded .design/ structure with updated skill rules, token architecture, OOP JS, and design integrations."
 compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Self-contained with zero runtime, build tool, framework, package manager, or external skill dependencies. No Shopify credentials required."
 ---
 
 # Theme Forge
 
-Theme Forge is a design-first workflow for building eCommerce storefront prototypes. It develops visual design, interaction architecture, token systems, and components completely standalone in a dedicated prototype workspace, keeping frontend craft independent of Shopify theme directories until the design contract is complete.
+Theme Forge is a design-first workflow for building eCommerce and Shopify storefronts directly within a Shopify theme directory. It develops visual design, interaction architecture, token systems, and component prototypes in dedicated dot-prefixed workspace folders (`.design/` and `.docs/`), establishing a complete visual contract and design system alongside production Shopify theme code (`sections/`, `snippets/`, `templates/`, `layout/`, `config/`, `assets/`, `locales/`).
 
-The skill is reusable across stores and themes. A theme name, theme slug, category, visual language, and design direction may change per project. The prototype rules, token architecture, and OOP JavaScript standards remain consistent.
+The skill is reusable across stores and themes. A theme name, theme slug, category, visual language, and design direction may change per project. The prototype rules, token architecture, dot-prefixed workspace convention, and OOP JavaScript standards remain consistent.
 
 ## Portability and Invocation
 
@@ -30,11 +30,12 @@ Target scopes for `init-agents`:
 - `tokens`: Update the token and global settings contract reference in `AGENTS.md`.
 
 Target scopes for `resolve`:
-- `all` (default): Full audit and resolution across styles (tokens/colors/logical CSS), scripts (OOP classes), HTML templates (single shell/inline stripping/scaffolds), global settings contract (`docs/theme-settings.md`), design skill integration, and agent guidance.
-- `styles`: Audit and reconcile `design/styles.css` (zero hardcoded colors, 9-category CSS custom properties, color scheme scoping, bidirectional logical CSS properties).
-- `scripts`: Audit and refactor `design/script.js` into ES6 OOP classes with standardized lifecycles (`init`, `destroy`) and a central component registry.
-- `templates`: Normalize HTML prototype templates (enforce single header/footer in `index.html`, strip duplicate header/footer from secondary pages, strip inline styles/scripts, add missing default page scaffolds).
-- `docs`: Reconcile and synchronize `docs/theme-settings.md` global settings contract with active code tokens and features.
+- `all` (default): Full audit and resolution across workspace migration (migrating legacy standalone `design/` & `docs/` to `.design/` & `.docs/`), styles (tokens/colors/logical CSS), scripts (OOP classes), HTML templates (single shell/inline stripping/scaffolds), global settings contract (`.docs/theme-settings.md`), design skill integration, and agent guidance.
+- `migration`: Detect and convert legacy standalone directories (`design/`, `docs/`) to theme-embedded dot-prefixed directories (`.design/`, `.docs/`), updating paths, `.shopifyignore`, and `AGENTS.md`.
+- `styles`: Audit and reconcile `.design/styles.css` (zero hardcoded colors, 9-category CSS custom properties, color scheme scoping, bidirectional logical CSS properties).
+- `scripts`: Audit and refactor `.design/script.js` into ES6 OOP classes with standardized lifecycles (`init`, `destroy`) and a central component registry.
+- `templates`: Normalize HTML prototype templates in `.design/` (enforce single header/footer in `index.html`, strip duplicate header/footer from secondary pages, strip inline styles/scripts, add missing default page scaffolds).
+- `docs`: Reconcile and synchronize `.docs/theme-settings.md` global settings contract with active code tokens and features.
 
 When the host does not support slash commands, interpret `init`, `init-agents`, `agents`, or `resolve` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
 
@@ -42,17 +43,17 @@ The skill must work from a project directory, not only from the directory where 
 
 ### Optional Design Skill Integration
 
-- If the `frontend-design` skill (or an equivalent frontend design skill) is installed and available in the environment, leverage it to guide visual direction, layout hierarchy, typography, color schemes, motion, and UI refinement when prototyping in `design/` or resolving existing theme styles.
+- If the `frontend-design` skill (or an equivalent frontend design skill) is installed and available in the environment, leverage it to guide visual direction, layout hierarchy, typography, color schemes, motion, and UI refinement when prototyping in `.design/` or resolving existing theme styles.
 - During `/theme-forge resolve`, leverage available design skills to review visual craft, contrast, typography scaling, responsive behaviors, and micro-interactions while strictly enforcing Theme Forge token and architecture rules.
 - If `frontend-design` is not installed, proceed normally using Theme Forge's built-in design principles. Do not fail, block, or attempt automatic package installation.
-- Always preserve Theme Forge boundaries: all styles must live strictly in `design/styles.css`, client scripts in `design/script.js`, with no inline styles/scripts and no Liquid in prototypes.
+- Always preserve Theme Forge boundaries: all prototype styles must live strictly in `.design/styles.css`, client scripts in `.design/script.js`, with no inline styles/scripts and no Liquid in prototypes.
 
 ### Command selection
 
 1. Read the user's requested command and optional scope from the arguments or context.
-2. If it is `init`, follow the standalone prototype initialization workflow.
-3. If it is `init-agents` or `agents`, follow the existing project agent initialization workflow (scoped strictly to the standalone design project without modifying design files).
-4. If it is `resolve`, follow the existing theme resolution and reconciliation workflow (auditing and updating styles, scripts, templates, settings contract, and integrations).
+2. If it is `init`, follow the theme-embedded prototype initialization workflow.
+3. If it is `init-agents` or `agents`, follow the existing theme agent initialization workflow (generating or refreshing theme-aware `AGENTS.md` referencing `.design/` and `.docs/` without modifying design or theme code).
+4. If it is `resolve`, follow the existing theme resolution, migration, and reconciliation workflow (migrating standalone structures to `.design/` and `.docs/`, auditing and updating styles, scripts, templates, settings contract, and integrations).
 5. If no command is present, explain the valid commands (`init`, `init-agents`, `resolve`) and ask which one to run; do not inspect or modify project files yet.
 6. If the command is unknown, show the valid commands and ask the user to choose.
 
@@ -61,12 +62,13 @@ At the start of a command, state the selected project root, command, and the fil
 ## Safety and Change Policy
 
 - Inspect the project before creating or changing files.
+- **Strict Shopify Theme Prerequisite**: Theme Forge operates exclusively within an existing Shopify theme codebase. The target workspace must be a valid Shopify theme containing standard Shopify theme directories/files (such as `layout/` containing `theme.liquid`, `templates/`, `sections/`, `snippets/`, `config/settings_schema.json`, `assets/`, and/or `locales/`). If no Shopify theme structure is detected in the project root, Theme Forge **MUST NOT** initialize. It must immediately halt execution, report that the workspace is not a valid Shopify theme, and prompt the user to initialize a theme first (e.g. `shopify theme init <theme-name>`) or select an existing theme path.
 - Never delete, reset, or overwrite user-authored files without explicit confirmation.
 - Create missing directories and files only when they are part of the requested command output.
 - If a target file already exists, preserve its content and make the smallest compatible update. Report what was preserved and what changed.
-- **Standalone Boundary Rule**: Theme Forge operates strictly within the standalone design prototype workspace (`design/`, `docs/`, `fixtures/`, `assets/`, `AGENTS.md`, `CLAUDE.md`, `.shopifyignore`). It does NOT write into Shopify theme production directories (`sections/`, `templates/`, `layout/`, `config/`).
-- The `init-agents` command modifies ONLY agent guidance files (`AGENTS.md`, `CLAUDE.md`, `.shopifyignore`); it NEVER touches, resets, or modifies existing HTML, CSS, JavaScript, fixtures, or assets.
-- The `resolve` command audits and reconciles existing prototype files (`design/styles.css`, `design/script.js`, HTML templates, `docs/theme-settings.md`, `AGENTS.md`) against updated skill rules and design integrations, preserving existing design intent while eliminating hardcoded colors, refactoring scripts to OOP, stripping duplicate shells, and aligning tokens.
+- **Theme-Embedded Dot-Directory Convention**: Theme Forge maintains all prototype assets and design documentation strictly inside dot-prefixed directories (`.design/` and `.docs/`) within the Shopify theme root. This guarantees full compatibility with Shopify CLI (`shopify theme push`, `shopify theme dev`, `shopify theme check`), which ignores dot-prefixed directories by default.
+- The `init-agents` command modifies ONLY agent guidance files (`AGENTS.md`, `CLAUDE.md`, `.shopifyignore`); it NEVER touches, resets, or modifies existing HTML, CSS, JavaScript, fixtures, assets, or Liquid files.
+- The `resolve` command audits and reconciles existing prototype files (`.design/styles.css`, `.design/script.js`, HTML templates, `.docs/theme-settings.md`, `AGENTS.md`) and migrates legacy non-dot directories (`design/`, `docs/`) to `.design/` and `.docs/`, preserving existing design intent while eliminating hardcoded colors, refactoring scripts to OOP, stripping duplicate shells, and aligning tokens.
 - Do not add dependencies, build tools, frameworks, design systems, or remote assets unless explicitly requested.
 - At the end of any command, report created files, updated files, skipped files, and unresolved decisions.
 
@@ -74,9 +76,32 @@ At the start of a command, state the selected project root, command, and the fil
 
 ### `/theme-forge init`
 
-Initialize a new standalone theme design workspace at the selected project root.
+Initialize a new embedded theme design workspace directly inside the selected Shopify theme project root.
 
-Before creating files, ask for:
+#### Step 0: Shopify Theme Verification (Prerequisite Check)
+
+Before asking theme questions or creating any directories/files, verify that the target directory is an existing Shopify theme:
+
+1. Inspect the selected project root for standard Shopify theme directories/files (`layout/`, `templates/`, `sections/`, `snippets/`, `config/settings_schema.json`, `assets/`, `locales/`).
+2. If **NO Shopify theme structure is detected**:
+   - **DO NOT** prompt for theme name, category, slug, or design direction.
+   - **DO NOT** create `.design/`, `.docs/`, `AGENTS.md`, or `.shopifyignore`.
+   - Immediately abort execution with a clear, helpful message:
+     ```text
+     Error: Theme Forge cannot be initialized because no Shopify theme was detected at: [target_path]
+
+     Theme Forge requires an existing Shopify theme directory (containing layout/, templates/, sections/, snippets/, config/, etc.).
+
+     To resolve:
+     1. Scaffold a new Shopify theme first:
+        shopify theme init <theme-name>
+     2. Or run `/theme-forge init` pointing to an existing Shopify theme directory.
+     ```
+   - Report the command as aborted/unresolved.
+
+#### Step 1: Gather Theme Identity & Design Parameters
+
+If and only if a valid Shopify theme directory is confirmed, ask for:
 
 1. **Theme name** - the merchant-facing name.
 2. **Theme category** - the business or storefront category, such as fashion, beauty, food, furniture, electronics, jewelry and accessories, services, or general commerce.
@@ -95,23 +120,26 @@ Question formatting rules for hosts that use structured question tools:
 
 #### Initialization behavior
 
-Create the smallest useful standalone design-first structure. Preserve existing user files and never overwrite an existing file without inspecting it first.
+Create the smallest useful design-first structure directly in the verified theme root using dot-prefixed folders (`.design/`, `.docs/`). Preserve existing user files and never overwrite an existing file without inspecting it first.
 
-Initialization root rule: run `/theme-forge init` against the selected project root and create or update child paths from there. Do not treat `design/` as the project root.
+Initialization root rule: run `/theme-forge init` against the selected Shopify theme project root and create or update child paths from there. Do not treat `.design/` as the project root.
 
 Use this order:
 
-1. Inspect the project root and identify existing design, docs, assets, and configuration directories.
-2. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
-3. Create only missing directories and files.
-4. Write the settings contract using the requested identity.
-5. Derive the global settings contract from the project itself: inspect existing brand assets, styles, fixtures, fonts, spacing, radii, shadows, and any pre-existing CSS or tokens before writing `docs/theme-settings.md`. The contract must cover every visual dimension the prototype will need, not a minimal starter set.
-6. Create or update `.shopifyignore` in the project root to ensure Shopify CLI ignores prototype and documentation files.
-7. Create or update `AGENTS.md` in the project root with agent guidelines and strict design prototype boundaries, then ensure a `CLAUDE.md` relative symbolic link points to `AGENTS.md`.
-8. Summarize created, updated, skipped, and unresolved items.
+1. Verify Shopify theme structure in the project root (`layout/`, `templates/`, `sections/`, `snippets/`, `config/`, `assets/`, `locales/`). If absent, abort.
+2. Identify existing design directories (`.design/`, `.docs/`, or legacy `design/`, `docs/`).
+3. If legacy `design/` or `docs/` exist, seamlessly migrate them to `.design/` and `.docs/`.
+4. Confirm the derived theme slug if it is ambiguous or conflicts with an existing project identifier.
+5. Create only missing directories and files.
+6. Write the settings contract using the requested identity.
+7. Derive the global settings contract from the project itself: inspect existing brand assets, styles, fixtures, fonts, spacing, radii, shadows, and any pre-existing CSS or tokens before writing `.docs/theme-settings.md`. The contract must cover every visual dimension the prototype will need, not a minimal starter set.
+8. Create or update `.shopifyignore` in the project root to ensure Shopify CLI ignores prototype and documentation files (`.design/`, `.docs/`, `AGENTS.md`, `CLAUDE.md`).
+9. Create or update `AGENTS.md` in the project root with comprehensive agent guidelines explaining the theme design contract, dot-folder architecture, CSS token mappings, OOP JS classes, and Liquid implementation patterns, then ensure a `CLAUDE.md` relative symbolic link points to `AGENTS.md`.
+10. Summarize created, updated, skipped, and unresolved items.
 
 ```text
-design/
+# Shopify Theme Root Structure with Theme Forge:
+.design/
   index.html
   404.html
   article.html
@@ -131,17 +159,26 @@ design/
   fixtures/
   assets/
 
-docs/
+.docs/
   theme-settings.md
 
 .shopifyignore
 AGENTS.md
 CLAUDE.md -> AGENTS.md
+
+# Standard Shopify Theme Folders (alongside .design/ and .docs/):
+layout/
+sections/
+snippets/
+templates/
+assets/
+config/
+locales/
 ```
 
 If the project already has an equivalent structure, reuse it and add only missing files. Do not create a framework, build step, component library, or design system.
 
-Add or update `docs/theme-settings.md` with:
+Add or update `.docs/theme-settings.md` with:
 
 - Theme name, slug, category, supported locales, and direction.
 - Design direction: the chosen visual style and key characteristics (e.g., soft shadows for Neumorphism, glass blur for Glassmorphism).
@@ -155,68 +192,72 @@ Add or update `docs/theme-settings.md` with:
 
 ### `/theme-forge init-agents [scope]` (Alias: `/theme-forge agents`)
 
-Initialize or refresh agent guidance files (`AGENTS.md`, `CLAUDE.md`, `.shopifyignore`) in an existing project, scoped strictly to the standalone design prototype without altering existing design files.
+Initialize or refresh agent guidance files (`AGENTS.md`, `CLAUDE.md`, `.shopifyignore`) in an existing Shopify theme project, informing AI agents and developers of the complete design contract in `.design/` and `.docs/` and how to implement it across Shopify theme files without altering existing design or Liquid files.
 
 This command is ideal for:
-- Existing design repositories that need standardized AI agent rules and boundaries.
-- Projects where `AGENTS.md` was removed, outdated, or needs realignment with Theme Forge's strict token and OOP standards.
-- Monorepos or existing repositories adding a standalone `design/` prototype workspace.
+- Existing Shopify themes adding a `.design/` and `.docs/` design contract workspace.
+- Theme projects where `AGENTS.md` was removed, outdated, or needs realignment with Theme Forge's embedded theme architecture, strict token rules, and OOP JS standards.
+- Refreshing agent instructions to ensure all coding agents understand the relationship between `.design/` prototypes and Shopify Liquid theme files.
 
 #### `init-agents` Execution Steps:
 
 1. **Project Inspection**:
-   - Inspect the workspace root to detect existing directories (`design/`, `docs/`, `fixtures/`, `assets/`).
-   - Detect existing theme slug or brand identifiers from `docs/theme-settings.md`, `design/styles.css`, or `package.json`.
+   - Inspect the workspace root to detect existing theme structure (`layout/`, `sections/`, `snippets/`, `templates/`, `config/`, `assets/`) and design directories (`.design/`, `.docs/`, or legacy `design/`, `docs/`).
+   - If legacy `design/` or `docs/` are found, note them for migration or migrate them to `.design/` and `.docs/`.
+   - Detect existing theme slug or brand identifiers from `.docs/theme-settings.md`, `.design/styles.css`, `config/settings_schema.json`, or `package.json`.
    - Identify existing CSS custom property naming conventions (e.g. `--[theme-slug]-*`).
-   - Identify existing interactive components and JS class structures in `design/script.js`.
+   - Identify existing interactive components and JS class structures in `.design/script.js`.
 2. **Generate / Update `AGENTS.md`**:
-   - Write or update `AGENTS.md` in the project root with complete, scoped agent instructions (see `AGENTS.md` Specification below).
+   - Write or update `AGENTS.md` in the theme root with complete, theme-aware agent instructions (see `AGENTS.md` Specification below).
+   - Ensure `AGENTS.md` explicitly details the `.design/` prototype contract, `.docs/theme-settings.md` global schema, zero hardcoded color rules, OOP JS lifecycles, and how Liquid sections/snippets implement the design.
    - If `AGENTS.md` already exists, preserve project-specific custom sections while updating/ensuring Theme Forge design boundaries and coding standards.
 3. **Establish `CLAUDE.md` Symbolic Link**:
    - Create or verify the relative symbolic link `CLAUDE.md -> AGENTS.md` in the project root (`ln -s AGENTS.md CLAUDE.md`).
 4. **Configure `.shopifyignore`**:
-   - Create or update `.shopifyignore` to guarantee prototype directories and agent files are ignored:
+   - Create or update `.shopifyignore` to guarantee prototype directories and agent files are ignored by Shopify CLI:
      ```text
-     design/
-     docs/
+     .design/
+     .docs/
      AGENTS.md
      CLAUDE.md
      ```
 5. **Report Summary**:
-   - Report created, updated, skipped, and unresolved items. Do not modify any HTML, CSS, JS, or fixture files.
+   - Report created, updated, skipped, and unresolved items. Do not modify any HTML, CSS, JS, fixture, or Liquid files.
 
 ---
 
 ### `/theme-forge resolve [scope]`
 
-Audit, reconcile, and resolve an existing theme design prototype against the latest Theme Forge standards, token architecture, zero hardcoded color rules, OOP JavaScript architecture, single shell principles, and design skill integrations.
+Audit, reconcile, and resolve an existing theme workspace or standalone project against the latest Theme Forge standards: migrating legacy standalone folders (`design/`, `docs/`) into embedded dot-prefixed directories (`.design/`, `.docs/`), eliminating hardcoded colors, refactoring scripts to OOP ES6 classes, enforcing single shell rules in `.design/index.html`, and aligning theme `AGENTS.md` guidance.
 
 This command is ideal for:
+- **Standalone Project Migration**: Migrating any standalone Theme Forge project or legacy repository containing `design/` and `docs/` into a standard Shopify theme structure with `.design/` and `.docs/`.
 - Existing theme prototypes built with older conventions or incomplete token sets.
-- Prototypes containing hardcoded colors (hex `#...`, `rgb()`, `rgba()`, `hsl()`, named colors) in `design/styles.css` that need migration to semantic `--[theme-slug]-color-*` tokens and color scheme groups.
+- Prototypes containing hardcoded colors (hex `#...`, `rgb()`, `rgba()`, `hsl()`, named colors) in `.design/styles.css` that need migration to semantic `--[theme-slug]-color-*` tokens and color scheme groups.
 - Prototypes with procedural JavaScript or loose global functions that need refactoring into ES6 OOP classes and a component registry.
 - Prototypes where secondary HTML pages duplicate `<header>` and `<footer>` markup, contain inline styles/scripts, or are missing default page coverage.
-- Synchronizing `docs/theme-settings.md` with current CSS custom properties and prototype features.
+- Synchronizing `.docs/theme-settings.md` with current CSS custom properties, theme settings schema, and prototype features.
 - Upgrading existing prototypes with visual refinement and modern web best practices when `frontend-design` is available.
 
 #### `resolve` Execution Steps:
 
-1. **Workspace Inspection & Audit**:
-   - Inspect the workspace root and verify the prototype layout (`design/`, `docs/`, `fixtures/`, `assets/`).
-   - Detect existing theme identity (theme name, slug, category, design direction) from `docs/theme-settings.md`, `design/styles.css`, or HTML titles. If ambiguous, confirm with the user.
-   - Run an audit across all files:
-     - **CSS Audit**: Detect hardcoded color literals (`#...`, `rgb()`, `hsl()`, named colors), missing 9-category tokens, missing color scheme scopes (`[data-color-scheme="..."]`), and physical directional properties (`left`, `right`, `margin-left`, etc.).
-     - **JS Audit**: Detect loose procedural code, global functions, missing class encapsulation, unmanaged lifecycles, or missing component registry.
-     - **HTML Audit**: Detect duplicate `<header>`/`<footer>` markup in secondary pages, inline styles (`style="..."`), inline scripts/handlers (`onclick="..."`), and missing default Shopify page prototypes.
-     - **Docs Audit**: Check `docs/theme-settings.md` completeness across the 9 canonical categories and token alignment.
+1. **Workspace Inspection & Migration**:
+   - Inspect the workspace root and check directory structure.
+   - **Standalone-to-Theme Migration**: If legacy `design/` or `docs/` directories are present, migrate and rename them to `.design/` and `.docs/`. Update any file paths or internal references accordingly.
+   - Detect existing theme identity (theme name, slug, category, design direction) from `.docs/theme-settings.md`, `.design/styles.css`, or HTML titles. If ambiguous, confirm with the user.
+   - Run an audit across all prototype files:
+     - **CSS Audit**: Detect hardcoded color literals (`#...`, `rgb()`, `hsl()`, named colors), missing 9-category tokens, missing color scheme scopes (`[data-color-scheme="..."]`), and physical directional properties (`left`, `right`, `margin-left`, etc.) in `.design/styles.css`.
+     - **JS Audit**: Detect loose procedural code, global functions, missing class encapsulation, unmanaged lifecycles, or missing component registry in `.design/script.js`.
+     - **HTML Audit**: Detect duplicate `<header>`/`<footer>` markup in secondary pages, inline styles (`style="..."`), inline scripts/handlers (`onclick="..."`), and missing default Shopify page prototypes in `.design/`.
+     - **Docs Audit**: Check `.docs/theme-settings.md` completeness across the 9 canonical categories and token alignment.
 
-2. **Resolve Styles (`design/styles.css`)** (Scope: `all` or `styles`):
+2. **Resolve Styles (`.design/styles.css`)** (Scope: `all` or `styles`):
    - **Zero Hardcoded Colors**: Extract and replace all hardcoded color literals with semantic CSS custom properties (`--[theme-slug]-color-*`).
    - **Color Schemes**: Structure tokens under root and scoped selectors (`:root`, `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`) for background, text, buttons, borders, links, icons, and badges.
    - **9 Canonical Categories**: Ensure full token definitions for Brand, Colors, Typography (Display, Heading, Body, Accent), Buttons & Radii, Product Cards, Layout & Spacing, Cart, Search & Discovery, and Accessibility/Prose.
    - **Logical CSS & RTL Readiness**: Convert directional physical properties to logical properties (`margin-inline-start`/`end`, `padding-inline-start`/`end`, `inset-inline-start`/`end`, `text-align: start`/`end`, border-radius logical properties).
 
-3. **Resolve JavaScript Architecture (`design/script.js`)** (Scope: `all` or `scripts`):
+3. **Resolve JavaScript Architecture (`.design/script.js`)** (Scope: `all` or `scripts`):
    - Refactor all interactive functionality into modular ES6 classes (e.g. `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`, `PredictiveSearch`, `FilterDrawer`, `ModalManager`, `Accordion`).
    - Implement standardized lifecycle methods on each class:
      - `constructor(element, options)`: Store DOM references and initial state.
@@ -226,14 +267,14 @@ This command is ideal for:
    - Implement a central `ThemeApp` / `ComponentRegistry` coordinator instantiated on `DOMContentLoaded`.
    - Eliminate all floating global functions, top-level event listeners, and procedural scripting.
 
-4. **Resolve HTML Prototype Templates** (Scope: `all` or `templates`):
-   - **Single Header & Footer Rule**: Ensure the full global `<header>` and `<footer>` live strictly in `design/index.html`. Strip duplicated header and footer markup from secondary pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.), retaining only page-specific `<main>` content.
-   - **Strip Inline Code**: Remove all inline `style="..."` attributes and inline event handlers (`onclick`, `onchange`, etc.). Relocate styles to `design/styles.css` and event handlers to `design/script.js` classes.
+4. **Resolve HTML Prototype Templates (`.design/*.html`)** (Scope: `all` or `templates`):
+   - **Single Header & Footer Rule**: Ensure the full global `<header>` and `<footer>` live strictly in `.design/index.html`. Strip duplicated header and footer markup from secondary pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.), retaining only page-specific `<main>` content.
+   - **Strip Inline Code**: Remove all inline `style="..."` attributes and inline event handlers (`onclick`, `onchange`, etc.). Relocate styles to `.design/styles.css` and event handlers to `.design/script.js` classes.
    - **Default Page Completeness**: Verify all 14 default Shopify prototype pages are present (`index.html`, `404.html`, `article.html`, `blog.html`, `cart.html`, `cart-drawer.html`, `collection.html`, `collections-list.html`, `page.html`, `page.contact.html`, `password.html`, `product.html`, `search.html`, `gift_card.html`). Create minimal accessible scaffolds (`data-prototype-status="scaffold"`) for any missing pages.
    - **Accessibility & Semantics**: Ensure semantic HTML5 elements (`<main>`, `<nav>`, `<article>`, `<section>`, `<dialog>`, `<details>`), form labels, ARIA roles, and keyboard focus states.
 
-5. **Reconcile Global Settings Contract (`docs/theme-settings.md`)** (Scope: `all` or `docs`):
-   - Synchronize `docs/theme-settings.md` with resolved CSS tokens and prototype capabilities across all 9 canonical categories.
+5. **Reconcile Global Settings Contract (`.docs/theme-settings.md`)** (Scope: `all` or `docs`):
+   - Synchronize `.docs/theme-settings.md` with resolved CSS tokens and prototype capabilities across all 9 canonical categories.
    - Ensure setting tables specify Shopify-safe `snake_case` IDs, control types, defaults, ranges, token mappings, scopes, and wiring statuses.
    - Document the theme's visual direction and key characteristics.
 
@@ -241,12 +282,12 @@ This command is ideal for:
    - If `frontend-design` or modern web guidance is present, apply refined visual aesthetics, harmonious typography scales, balanced spacing, cohesive micro-animations, and interactive hover/active states consistent with the theme's design direction while strictly obeying the zero hardcoded colors and single stylesheet rules.
 
 7. **Agent Guidance & Boundary Synchronization**:
-   - Update `AGENTS.md` in the project root with the resolved theme tokens, OOP architecture, and strict prototype boundaries.
+   - Update `AGENTS.md` in the theme root with the resolved theme tokens, OOP architecture, dot-prefixed workspace map, and theme development guidance.
    - Ensure the relative symbolic link `CLAUDE.md -> AGENTS.md` is valid.
-   - Ensure `.shopifyignore` contains entries for `design/`, `docs/`, `AGENTS.md`, and `CLAUDE.md`.
+   - Ensure `.shopifyignore` contains entries for `.design/`, `.docs/`, `AGENTS.md`, and `CLAUDE.md`.
 
 8. **Completion Report**:
-   - Provide a factual summary separating created, updated, skipped, and unresolved items, highlighting rule violations resolved (e.g. number of hardcoded colors tokenized, classes created, secondary page headers stripped).
+   - Provide a factual summary separating created, updated, skipped, and unresolved items, highlighting rule violations resolved (e.g. standalone directories migrated, hardcoded colors tokenized, classes created, secondary page headers stripped).
 
 #### `.shopifyignore` Configuration
 
@@ -254,8 +295,8 @@ Create `.shopifyignore` in the project root if it does not exist, or append miss
 
 ```text
 # Theme Forge Prototype & Documentation
-design/
-docs/
+.design/
+.docs/
 AGENTS.md
 CLAUDE.md
 ```
@@ -264,51 +305,56 @@ CLAUDE.md
 
 Create `AGENTS.md` in the project root if it does not exist, or update an existing `AGENTS.md` by preserving existing instructions and appending/merging the Theme Forge conventions. Create a symbolic link `CLAUDE.md` pointing to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`) if missing.
 
-`AGENTS.md` serves as persistent guidance for coding agents working on the standalone theme prototype. It must contain:
+`AGENTS.md` serves as persistent guidance for coding agents and developers working on the Shopify theme and its embedded design system. It must contain:
 
 1. **Theme Identity & Overview**: Theme name, slug, category, supported languages, RTL direction requirements, and chosen design direction.
-2. **Design-First Architecture & Boundaries**:
-   - Visual prototyping is strictly confined to `design/`.
-   - Standalone execution: no Liquid, Shopify API endpoints, build systems, CSS frameworks, or JavaScript libraries in `design/`.
-   - Clean, semantic HTML5, vanilla CSS with CSS custom properties (`--[theme-slug]-*`), and vanilla Object-Oriented JavaScript (OOP) for client interactions.
-   - Single stylesheet and script rule: all styles across the prototype must live strictly in the single shared CSS file (`design/styles.css`) and all JavaScript in the single shared JS file (`design/script.js`). Never use inline CSS (`style` attributes or `<style>` blocks) or inline JavaScript (event handlers like `onclick` or inline `<script>` blocks) inside HTML pages.
-   - **Strict Zero Hardcoded Colors Rule**: `design/styles.css` must NEVER contain hardcoded color literals (no hex `#...`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, or named colors like `white`, `black`, `red`). Every single color value across all components, utilities, and states must strictly reference semantic CSS variables / tokens (`var(--[theme-slug]-color-*)`).
-   - **Strict Object-Oriented JavaScript (OOP) Rule**: `design/script.js` must strictly follow an Object-Oriented Programming architecture using ES6 classes. Every interactive component/feature must be encapsulated in a class (e.g., `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`) with standardized lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central component registry/app bootstrap. No loose procedural scripts or global floating functions.
-   - **Single Header & Footer Rule**: The global `<header>` (announcement bar, navigation, logo, cart trigger, etc.) and `<footer>` (links, newsletter, copyright, disclosures) must **strictly only be developed in `design/index.html`** (the shared shell). Never duplicate full header and footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, etc.); secondary pages contain only their page-specific `<main>` template content to prevent duplication and maintenance divergence.
-   - Bidirectional-safe layout with logical CSS properties (`inline-start`/`inline-end`).
+2. **Shopify Theme & Embedded Design System Architecture**:
+   - **Visual Design Source of Truth (`.design/`)**: All visual prototypes, HTML layouts, class naming conventions, CSS styles, and OOP JavaScript interactions are authored and refined in `.design/`.
+   - **Global Settings Contract (`.docs/theme-settings.md`)**: Defines the 9 canonical setting categories mapped to `config/settings_schema.json` and CSS custom properties (`--[theme-slug]-*`).
+   - **Theme Implementation Bridge**:
+     - When building or editing Shopify theme files (`layout/theme.liquid`, `sections/*.liquid`, `snippets/*.liquid`, `templates/*.json`), refer to `.design/` prototypes for HTML structure, class names, accessibility attributes, and interactions.
+     - Global settings defined in `.docs/theme-settings.md` map 1:1 to theme settings in `config/settings_schema.json` and Liquid output tags (`settings.[setting_id]`).
+     - Styles in `.design/styles.css` serve as the master stylesheet or token source for theme assets (`assets/[theme-slug].css`).
+     - Client interactions in `.design/script.js` serve as the master OOP JavaScript implementation for theme assets (`assets/[theme-slug].js`).
+   - **Dot-Folder Convention**: The prototype workspace uses `.design/` and `.docs/` so Shopify CLI commands (`shopify theme dev`, `shopify theme push`) automatically ignore them without interfering with theme deployments.
+   - **Strict Zero Hardcoded Colors Rule**: Both `.design/styles.css` and theme stylesheets must NEVER contain hardcoded color literals (no hex `#...`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, or named colors like `white`, `black`, `red`). Every single color value across all components, utilities, and states must strictly reference semantic CSS variables / tokens (`var(--[theme-slug]-color-*)`) scoped to color schemes (`[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`).
+   - **Strict Object-Oriented JavaScript (OOP) Rule**: All interactive features must strictly follow an Object-Oriented Programming architecture using ES6 classes (e.g., `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`, `PredictiveSearch`, `FilterDrawer`, `ModalManager`) with standardized lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central component registry/app bootstrap. No loose procedural scripts or global floating functions.
+   - **Single Header & Footer Rule in Prototypes**: The global `<header>` and `<footer>` must **strictly only be developed in `.design/index.html`** (the shared shell). Never duplicate full header and footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, etc.); secondary pages contain only their page-specific `<main>` template content.
+   - **Bidirectional-Safe Layout**: Use CSS logical properties (`margin-inline-start`/`end`, `padding-inline-start`/`end`, `inset-inline-start`/`end`, `text-align: start`/`end`) to guarantee built-in RTL compatibility.
 3. **Workspace Directory Map**:
-   - `design/`: Isolated pure HTML/CSS/JS prototypes, styles, scripts, fixtures.
-   - `docs/`: `theme-settings.md` (global settings contract).
+   - `.design/`: Pure HTML/CSS/JS prototype workspace, styles, scripts, fixtures, assets.
+   - `.docs/`: `theme-settings.md` (global settings contract) and theme documentation.
+   - `layout/`, `sections/`, `snippets/`, `templates/`, `assets/`, `config/`, `locales/`: Shopify theme codebase.
 4. **Theme Forge Commands**:
-   - `/theme-forge init`: Initialize or update prototype workspace and global settings contract.
-   - `/theme-forge init-agents` (alias `/theme-forge agents`): Initialize or refresh agent instructions and `.shopifyignore` for existing projects scoped strictly to the design prototype.
-   - `/theme-forge resolve [scope]`: Audit, reconcile, and resolve existing prototype styles, scripts, templates, settings contracts, and design integrations against Theme Forge standards.
+   - `/theme-forge init`: Initialize embedded design workspace and global settings contract inside the theme.
+   - `/theme-forge init-agents` (alias `/theme-forge agents`): Initialize or refresh theme `AGENTS.md` instructions and `.shopifyignore`.
+   - `/theme-forge resolve [scope]`: Migrate standalone workspaces to `.design/` and `.docs/`, and audit/reconcile existing prototype styles, scripts, templates, settings contracts, and design integrations.
 5. **Modification & Safety Rules**:
    - Never overwrite user files without confirmation.
-   - Do not create or modify files outside the standalone prototype workspace (`design/`, `docs/`, `fixtures/`, `assets/`, `AGENTS.md`, `CLAUDE.md`, `.shopifyignore`).
-   - Keep settings documented in `docs/theme-settings.md` synchronized with CSS tokens.
-   - Route all colors strictly through documented color scheme roles and `--[theme-slug]-color-*` tokens; never introduce hard-coded colors or per-component color values in `design/styles.css`.
+   - Respect boundaries between prototype design files in `.design/` and production theme code.
+   - Keep settings documented in `.docs/theme-settings.md` synchronized with CSS tokens and `config/settings_schema.json`.
+   - Route all colors strictly through documented color scheme roles and `--[theme-slug]-color-*` tokens.
 
 For the `CLAUDE.md` symbolic link:
 - Create it in the project root pointing to `AGENTS.md` via `ln -s AGENTS.md CLAUDE.md` or equivalent filesystem operation.
 - If a symlink or file named `CLAUDE.md` already exists, preserve it if it points to `AGENTS.md` or report it under `skipped` / `updated`.
 - If symbolic link creation fails (e.g., due to filesystem limitations), report it under `unresolved` with manual creation instructions.
 
-Do not create empty HTML files that imply a finished design. If a page prototype does not exist, create a minimal accessible scaffold with a clear `data-prototype-status="scaffold"` marker, or record the missing page in `docs/theme-settings.md` when the user asks for documentation only.
+Do not create empty HTML files that imply a finished design. If a page prototype does not exist, create a minimal accessible scaffold with a clear `data-prototype-status="scaffold"` marker, or record the missing page in `.docs/theme-settings.md` when the user asks for documentation only.
 
-Do not build homepage sections or blocks during initialization. `design/index.html` should establish the shared shell only. Homepage composition is a separate design task after the global settings and default page layouts are credible.
+Do not build homepage sections or blocks during initialization. `.design/index.html` should establish the shared shell only. Homepage composition is a separate design task after the global settings and default page layouts are credible.
 
 #### Init design rules
 
 The prototype must use:
 
-- Plain HTML files, exactly one shared CSS file (`design/styles.css`), and exactly one shared JavaScript file (`design/script.js`).
-- Single stylesheet rule: every style across the prototype must reside in the single shared CSS file (`design/styles.css`). Never write or inject inline CSS (using `style` attributes or `<style>` blocks) or inline JavaScript (using event attributes like `onclick` or inline `<script>` blocks) inside any HTML page.
-- **Strict Zero Hardcoded Colors Rule**: `design/styles.css` must NEVER contain any hardcoded color literals (hex, rgb, rgba, hsl, or named colors). Every color property (`color`, `background-color`, `border-color`, `box-shadow`, `fill`, `stroke`, etc.) must strictly reference semantic CSS custom properties (`var(--[theme-slug]-color-*)`).
-- Single header and footer source of truth: Develop the global `<header>` and `<footer>` **strictly in `design/index.html`** (the shared shell). Never duplicate header or footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.). All other prototype pages focus purely on their page-specific `<main>` content to eliminate duplication and maintenance overhead.
+- Plain HTML files, exactly one shared CSS file (`.design/styles.css`), and exactly one shared JavaScript file (`.design/script.js`).
+- Single stylesheet rule: every style across the prototype must reside in the single shared CSS file (`.design/styles.css`). Never write or inject inline CSS (using `style` attributes or `<style>` blocks) or inline JavaScript (using event attributes like `onclick` or inline `<script>` blocks) inside any HTML page.
+- **Strict Zero Hardcoded Colors Rule**: `.design/styles.css` must NEVER contain any hardcoded color literals (hex, rgb, rgba, hsl, or named colors). Every color property (`color`, `background-color`, `border-color`, `box-shadow`, `fill`, `stroke`, etc.) must strictly reference semantic CSS custom properties (`var(--[theme-slug]-color-*)`).
+- Single header and footer source of truth: Develop the global `<header>` and `<footer>` **strictly in `.design/index.html`** (the shared shell). Never duplicate header or footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.). All other prototype pages focus purely on their page-specific `<main>` content to eliminate duplication and maintenance overhead.
 - Plain CSS only — no CSS frameworks, preprocessors, or utility libraries (no Tailwind, Bootstrap, etc.).
 - **Vanilla JavaScript only (Object-Oriented / OOP)** — structured strictly using Object-Oriented Programming with ES6 classes, encapsulated component controllers, explicit lifecycles, and a clean component registry; no loose procedural scripts, no global floating functions, and no JS frameworks, libraries, or build tools (no React, Alpine, GSAP, etc.).
-- Static fixtures that resemble future Shopify data but contain no Liquid or Shopify API calls.
+- Static fixtures in `.design/fixtures/` that resemble future Shopify data but contain no Liquid or Shopify API calls.
 - Stable semantic classes and `data-*` hooks that can survive Liquid conversion.
 - CSS custom properties for global visual roles.
 - Native HTML behavior first: forms, links, buttons, `details`, and `dialog` where appropriate.
@@ -331,13 +377,13 @@ The chosen design direction shapes the visual language only:
 - Y2K: glossy surfaces, bold gradients, playful maximalism.
 - Cyberpunk: neon accents, dark backgrounds, glitch/tech aesthetics.
 - Art Deco: geometric patterns, metallic accents, ornamental detail.
-- Custom: the user defines the direction; capture it in `docs/theme-settings.md`.
+- Custom: the user defines the direction; capture it in `.docs/theme-settings.md`.
 
-Record the chosen direction in `docs/theme-settings.md` under a Design Direction section with key visual characteristics. Do not install or reference any framework, library, or build tool.
+Record the chosen direction in `.docs/theme-settings.md` under a Design Direction section with key visual characteristics. Do not install or reference any framework, library, or build tool.
 
 ## Global Settings Contract
 
-`docs/theme-settings.md` is the primary output of `/theme-forge init`. It must describe settings by their design effect, not by HTML structure.
+`.docs/theme-settings.md` is the primary output of `/theme-forge init`. It must describe settings by their design effect, not by HTML structure.
 
 The contract must be robust and project-derived:
 
@@ -463,15 +509,15 @@ Single source of truth for product card presentation everywhere (grids, search, 
 - **Prose Style**: Custom, Standard (governs long-form rich text typography) -> `--[theme-slug]-prose-style`
 
 ### CSS Variable & Token Architecture Rules
-1. **1:1 Alignment**: Every visual setting in the 9 categories must have an exact matching CSS custom property in `design/styles.css`.
-2. **Single Stylesheet**: All tokens, utility classes, and component rules reside strictly in `design/styles.css`.
+1. **1:1 Alignment**: Every visual setting in the 9 categories must have an exact matching CSS custom property in `.design/styles.css`.
+2. **Single Stylesheet**: All prototype tokens, utility classes, and component rules reside strictly in `.design/styles.css`.
 3. **No Inline Styling**: HTML templates must reference semantic classes or CSS custom properties—never inline `style="..."` or `<style>` blocks.
 4. **Color Scheme Scoping**: Color variables must be scoped to `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]` so components simply use `var(--[theme-slug]-color-background)`, etc., and react automatically to scheme changes.
-5. **Strict Zero Hardcoded Colors**: `design/styles.css` must **NEVER** contain hardcoded colors anywhere (no hex codes `#...`, `rgb()`, `rgba()`, `hsl()`, or named CSS colors like `black`, `white`, `red`). Every background, text, border, outline, shadow color, SVG fill/stroke, and badge color must strictly resolve through `var(--[theme-slug]-color-*)`.
+5. **Strict Zero Hardcoded Colors**: `.design/styles.css` (and theme CSS) must **NEVER** contain hardcoded colors anywhere (no hex codes `#...`, `rgb()`, `rgba()`, `hsl()`, or named CSS colors like `black`, `white`, `red`). Every background, text, border, outline, shadow color, SVG fill/stroke, and badge color must strictly resolve through `var(--[theme-slug]-color-*)`.
 
 ### JavaScript Architecture Rules (Object-Oriented / OOP)
 
-All interactive behaviors and client logic in `design/script.js` (and subsequent theme JavaScript) must strictly adhere to Object-Oriented Programming (OOP) principles:
+All interactive behaviors and client logic in `.design/script.js` (and subsequent theme JavaScript) must strictly adhere to Object-Oriented Programming (OOP) principles:
 
 1. **ES6 Class Encapsulation**:
    - Every interactive component or UI feature must be encapsulated in a dedicated ES6 class (e.g., `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`, `PredictiveSearch`, `FilterDrawer`, `ModalManager`, `Accordion`, `ToastNotification`, `QuickView`).
@@ -551,39 +597,39 @@ All interactive behaviors and client logic in `design/script.js` (and subsequent
 
 ## Default Page Coverage
 
-The initialization must account for these Shopify page experiences:
+The initialization must account for these Shopify page experiences in `.design/`:
 
-| Prototype file          | Shopify target          | Required design concern                                                     |
-| ----------------------- | ----------------------- | --------------------------------------------------------------------------- |
-| `404.html`              | `404.json`              | Recovery, search/discovery, and not-found state                             |
-| `article.html`          | `article.json`          | Article header, metadata, media, prose, sharing, related content            |
-| `blog.html`             | `blog.json`             | Blog listing, pagination/load-more, empty state                             |
-| `cart.html`             | `cart.json`             | Lines, quantities, removal, notes, discounts, totals, checkout, empty state |
-| `cart-drawer.html`      | Section via AJAX        | Slide-out drawer, same cart data, progressive enhancement, overlay behavior |
-| `collection.html`       | `collection.json`       | Collection header, product listing, filtering, sorting, empty state         |
-| `collections-list.html` | `collections-list.json` | Collection directory, card defaults, pagination/empty state                 |
-| `index.html`            | `index.json`            | Shared shell only until homepage sections are designed                      |
-| `page.html`             | `page.json`             | Standard page title and rich content                                        |
-| `page.contact.html`     | `page.contact.json`     | Contact fields, consent, validation, and success state                      |
-| `password.html`         | `password.json`         | Password message, access form, errors, and brand treatment                  |
-| `product.html`          | `product.json`          | Media, title, price, options, quantity, add-to-cart, unavailable state      |
-| `search.html`           | `search.json`           | Search input, result types, filtering/sorting, no-results state             |
-| `gift_card.html`        | `gift_card.liquid`      | Gift-card value/code, barcode or QR, print, and wallet actions              |
+| Prototype file                 | Shopify target          | Required design concern                                                     |
+| ------------------------------ | ----------------------- | --------------------------------------------------------------------------- |
+| `.design/404.html`              | `404.json`              | Recovery, search/discovery, and not-found state                             |
+| `.design/article.html`          | `article.json`          | Article header, metadata, media, prose, sharing, related content            |
+| `.design/blog.html`             | `blog.json`             | Blog listing, pagination/load-more, empty state                             |
+| `.design/cart.html`             | `cart.json`             | Lines, quantities, removal, notes, discounts, totals, checkout, empty state |
+| `.design/cart-drawer.html`      | Section via AJAX        | Slide-out drawer, same cart data, progressive enhancement, overlay behavior |
+| `.design/collection.html`       | `collection.json`       | Collection header, product listing, filtering, sorting, empty state         |
+| `.design/collections-list.html` | `collections-list.json` | Collection directory, card defaults, pagination/empty state                 |
+| `.design/index.html`            | `index.json`            | Shared shell only until homepage sections are designed                      |
+| `.design/page.html`             | `page.json`             | Standard page title and rich content                                        |
+| `.design/page.contact.html`     | `page.contact.json`     | Contact fields, consent, validation, and success state                      |
+| `.design/password.html`         | `password.json`         | Password message, access form, errors, and brand treatment                  |
+| `.design/product.html`          | `product.json`          | Media, title, price, options, quantity, add-to-cart, unavailable state      |
+| `.design/search.html`           | `search.json`           | Search input, result types, filtering/sorting, no-results state             |
+| `.design/gift_card.html`        | `gift_card.liquid`      | Gift-card value/code, barcode or QR, print, and wallet actions              |
 
 These are page contracts, not a section and block catalog. Do not invent homepage sections during `/theme-forge init`.
 
 ## Shopify Liquid Reference Objects for Default Pages
 
-When designing prototypes and fixtures, include field coverage for each page's primary Liquid objects so the visual contract can accommodate real Shopify data shapes.
+When designing prototypes and fixtures in `.design/`, include field coverage for each page's primary Liquid objects so the visual contract can accommodate real Shopify data shapes.
 
 Rules:
 
 - Treat this section as a fixture and UI coverage checklist, not a requirement to display every field in the final interface.
-- Include all listed fields in fixture data models for the matching page.
+- Include all listed fields in fixture data models in `.design/fixtures/` for the matching page.
 - If a field is not surfaced in UI, still account for it in behavior, states, or documentation.
-- Do not invent unsupported fields; when Shopify docs and existing theme code disagree, mark the mismatch as `unresolved` in `docs/shopify-wiring.md`.
+- Do not invent unsupported fields; when Shopify docs and existing theme code disagree, mark the mismatch as `unresolved` in `.docs/shopify-wiring.md`.
 
-### Product page (`product.html` -> `product.json`)
+### Product page (`.design/product.html` -> `templates/product.json`)
 
 Primary object: `product`
 
@@ -623,6 +669,7 @@ Use this baseline field checklist in fixtures and design mapping:
   "requires_selling_plan": false,
   "selected_or_first_available_selling_plan_allocation": {},
   "selected_or_first_available_variant": {},
+  "selected_plan": null,
   "selected_selling_plan": null,
   "selected_selling_plan_allocation": null,
   "selected_variant": null,
@@ -638,7 +685,7 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-### Collection page (`collection.html` -> `collection.json`)
+### Collection page (`.design/collection.html` -> `templates/collection.json`)
 
 Primary objects: `collection`, `collection.products`, `paginate`, `current_tags`, `sort_by`
 
@@ -702,7 +749,7 @@ Field groups to cover:
 - Filtering and sorting state: applied filters, clear-all behavior, zero-result behavior.
 - Pagination: current page, total pages, next/previous behavior and fallback.
 
-### Collections directory (`collections-list.html` -> `collections-list.json`)
+### Collections directory (`.design/collections-list.html` -> `templates/collections-list.json`)
 
 Primary objects: `collections`, `collection` items, optional `paginate`
 
@@ -753,13 +800,7 @@ Use this baseline field checklist in fixtures and design mapping:
 ]
 ```
 
-Field groups to cover:
-
-- Directory card basics: title, description excerpt, image, products_count, url, handle.
-- Ordering and visibility: sort strategy, hidden/empty collections, fallback media.
-- Empty and sparse states: no collections, missing image, long titles.
-
-### Cart page (`cart.html` -> `cart.json`)
+### Cart page (`.design/cart.html` -> `templates/cart.json`)
 
 Primary objects: `cart`, `cart.items`, `line_item`, `routes`
 
@@ -805,7 +846,7 @@ Line item object (`cart.items`):
   "image": {},
   "instructions": null,
   "item_components": null,
-  "key": 10974183882817,
+  "key": "10974183882817",
   "line_level_discount_allocations": [],
   "line_level_total_discount": "0.00",
   "line_price": "74.97",
@@ -848,47 +889,11 @@ Line item object (`cart.items`):
 }
 ```
 
-Field groups to cover:
-
-- Cart summary: item_count, total_price, original_total_price, total_discount, checkout_charge_amount, items_subtotal_price, note, currency, empty?, requires_shipping, taxes_included, duties_included, total_weight.
-- Cart discounts: cart_level_discount_applications, discount_applications, discounts.
-- Line items: key, id, product_id, variant_id, title, url, image, variant, quantity, properties, options_with_values, price, original_price, final_price, line_price, original_line_price, final_line_price, total_discount, line_level_total_discount, discounts, discount_allocations, line_level_discount_allocations.
-- Line item product context: product, vendor, sku, gift_card, taxable, requires_shipping, unit_price, unit_price_measurement.
-- Fulfillment: fulfillment, fulfillment_service, successfully_fulfilled_quantity, instructions, item_components.
-- Line item messaging: error_message, message.
-- Commerce actions: quantity updates, removal, notes, checkout path, continue shopping path, url_to_remove.
-- Edge states: empty cart, sold out, invalid quantity, discount conflicts, parent_relationship, selling_plan_allocation.
-
-### Cart drawer (section, not a template)
+### Cart drawer (`.design/cart-drawer.html` -> AJAX section / snippet)
 
 Primary objects: same as cart page (`cart`, `cart.items`, `line_item`), plus `routes`
 
-The cart drawer is a slide-out panel rendered as a Shopify section, not a standalone template. It shares the same Liquid data objects as the cart page but is loaded via AJAX into a global container.
-
-Use this baseline field checklist in fixtures and design mapping (same cart/line_item objects as above):
-
-```json
-{
-  "attributes": {},
-  "cart_level_discount_applications": [],
-  "checkout_charge_amount": "380.25",
-  "currency": {},
-  "discount_applications": [],
-  "discounts": [],
-  "duties_included": false,
-  "empty?": false,
-  "item_count": 2,
-  "items": [],
-  "items_subtotal_price": "422.49",
-  "note": "Hello this is a note",
-  "original_total_price": "380.25",
-  "requires_shipping": true,
-  "taxes_included": false,
-  "total_discount": "44.74",
-  "total_price": "380.25",
-  "total_weight": 0
-}
-```
+The cart drawer is a slide-out panel rendered as a Shopify section/snippet, not a standalone template. It shares the same Liquid data objects as the cart page but is loaded via AJAX into a global container.
 
 Field groups to cover:
 
@@ -898,14 +903,10 @@ Field groups to cover:
 - Empty state: drawer-specific empty messaging, continue shopping link.
 - Progressive enhancement: works without JS via full cart page fallback.
 - Accessibility: `role="dialog"`, `aria-modal`, `aria-label`, `aria-live` for count/total updates, focus management.
-- Edge states: sold-out items, invalid quantity, pending state during AJAX, error rollback.
-- Design concerns: overlay opacity, transition animation, z-index stacking, responsive width, mobile full-screen variant.
 
-### Blog page (`blog.html` -> `blog.json`)
+### Blog page (`.design/blog.html` -> `templates/blog.json`)
 
 Primary objects: `blog`, `blog.articles`, `article`, `paginate`, `current_tags`
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -926,20 +927,9 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Blog identity: title, url, handle, id, template_suffix.
-- Listing metadata: articles_count, all_tags, tags, comments_enabled?, moderated?.
-- Article list: articles collection, article card fields (title, excerpt/content preview, image, author, published_at, url, comments_count).
-- Navigation: next_article, previous_article, pagination, current_tags filter.
-- Empty and filtered states: no posts, tag with no matches.
-- Metafields: blog-level metafields for custom data.
-
-### Article page (`article.html` -> `article.json`)
+### Article page (`.design/article.html` -> `templates/article.json`)
 
 Primary objects: `article`, `blog`, `comments`, `comment`, `form`
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -948,7 +938,7 @@ Use this baseline field checklist in fixtures and design mapping:
   "comments": [],
   "comments_count": 1,
   "comments_enabled?": true,
-  "content": "<p>We've all had this problem before: we peek into the potions vault to determine which potions we are running low on, and the invisibility potion bottle looks completely empty.</p>\n<p>...</p>\n<p> </p>",
+  "content": "<p>We've all had this problem before: we peek into the potions vault to determine which potions we are running low on, and the invisibility potion bottle looks completely empty.</p>",
   "created_at": "2022-04-14 16:56:02 -0400",
   "excerpt": "And where to buy <strong>more</strong>!",
   "excerpt_or_content": "And where to buy <strong>more</strong>!",
@@ -967,22 +957,9 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Article identity: title, id, handle, url, template_suffix.
-- Content: content (rich HTML), excerpt, excerpt_or_content, image.
-- Metadata: author, user, created_at, published_at, updated_at, tags.
-- Comments: comments_enabled?, moderated?, comments_count, comments collection, comment_post_url, comment form.
-- Navigation context: parent blog, previous/next article behavior if used.
-- Social and engagement: share URL targets, comments_count.
-- Comment lifecycle: list state, empty state, submission success, validation errors.
-- Metafields: article-level metafields for custom data.
-
-### Search page (`search.html` -> `search.json`)
+### Search page (`.design/search.html` -> `templates/search.json`)
 
 Primary objects: `search`, `search.results`, `paginate`, `routes`
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -998,28 +975,14 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Result types: `search.results` can contain `article`, `page`, or `product` objects. Each result type carries its own fields from the corresponding object checklist above.
-
-Field groups to cover:
-
-- Query state: terms, performed, results_count.
-- Sorting: default_sort_by, sort_by, sort_options.
-- Filtering: filters, applied filters, clear-all behavior.
-- Results: results collection, result type detection (article, page, product), type-specific card metadata.
-- Pagination: paginate object, current page, total pages, next/previous behavior.
-- No-results handling: query echo, recovery links, fallback suggestions, zero-result state.
-- Discovery controls: type filtering, sort switching, predictive search when available.
-
-### Standard page (`page.html` -> `page.json`)
+### Standard page (`.design/page.html` -> `templates/page.json`)
 
 Primary object: `page`
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
   "author": "Polina Waters",
-  "content": "<p>Founded in 1842, our apothecary brings time-tested botanical remedies and sustainably harvested ingredients directly to modern homes.</p><h2>Our Philosophy</h2><p>Every formula begins with respect for nature, small-batch brewing, and uncompromising purity standards.</p>",
+  "content": "<p>Founded in 1842, our apothecary brings time-tested botanical remedies and sustainably harvested ingredients directly to modern homes.</p>",
   "handle": "about-us",
   "id": 89234857217,
   "published_at": "2023-01-15 10:00:00 -0400",
@@ -1029,16 +992,9 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Identity and content: title, content, handle, url, published_at, template_suffix.
-- Rich text behavior: headings, lists, tables, media embeds, long-form content.
-
-### Contact page (`page.contact.html` -> `page.contact.json`)
+### Contact page (`.design/page.contact.html` -> `templates/page.contact.json`)
 
 Primary objects: `page`, `form` (`contact`)
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -1064,17 +1020,9 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Static context: page title/content.
-- Form fields: name, email, phone, order reference, message, consent.
-- Form states: success confirmation, field errors, global errors, preserved input values.
-
-### Password page (`password.html` -> `password.json`)
+### Password page (`.design/password.html` -> `templates/password.json`)
 
 Primary objects: `shop`, `settings`, `form` (`storefront_password`), `form` (`customer`)
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -1098,17 +1046,9 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Brand presentation: logo, store name, message, social links.
-- Access form behavior: password field, submit, validation errors, retry flow.
-- Optional capture: email signup or announcement behaviors when configured.
-
-### Gift card page (`gift_card.html` -> `gift_card.liquid`)
+### Gift card page (`.design/gift_card.html` -> `templates/gift_card.liquid`)
 
 Primary object: `gift_card`
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -1135,18 +1075,9 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Value and balance: initial_value, balance, currency formatting.
-- Redemption data: code display strategy, masked/unmasked states.
-- Expiry and status: enabled/expired/disabled presentation.
-- Utility actions: print, Apple/Google wallet actions, QR/barcode presentation.
-
-### 404 page (`404.html` -> `404.json`)
+### 404 page (`.design/404.html` -> `templates/404.json`)
 
 Primary objects: `routes`, optional discovery sources (`search`, featured links)
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -1165,17 +1096,9 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Recovery actions: continue shopping, popular collections, search entry.
-- Context clarity: not-found messaging, suggested next steps.
-- Optional telemetry hooks: missing path context where available.
-
-### Home shell (`index.html` -> `index.json`)
+### Home shell (`.design/index.html` -> `templates/index.json` & `layout/theme.liquid`)
 
 Primary objects: global `shop`, `routes`, `linklists`, `localization`
-
-Use this baseline field checklist in fixtures and design mapping:
 
 ```json
 {
@@ -1246,51 +1169,45 @@ Use this baseline field checklist in fixtures and design mapping:
 }
 ```
 
-Field groups to cover:
-
-- Shared shell data contracts used by future sections.
-- Navigation, cart count indicator, account links, locale/currency selectors.
-- Global announcement and utility surfaces without inventing homepage sections.
-
 ## Completion Criteria
 
 ### `/theme-forge init` is complete when:
 
-- The requested theme identity and category are recorded in `docs/theme-settings.md`.
+- The selected workspace is verified as an existing Shopify theme directory containing standard theme architecture (`layout/`, `templates/`, `sections/`, `snippets/`, `config/`, etc.); non-theme directories are strictly rejected before creating files.
+- The requested theme identity and category are recorded in `.docs/theme-settings.md`.
 - The design direction is documented with key visual characteristics.
-- The standalone design workspace (`design/`) exists with all default page prototypes represented (`index.html`, `product.html`, `collection.html`, `collections-list.html`, `cart.html`, `cart-drawer.html`, `blog.html`, `article.html`, `search.html`, `page.html`, `page.contact.html`, `password.html`, `gift_card.html`, `404.html`).
-- All styles are consolidated strictly into the single shared CSS file (`design/styles.css`) with **zero hardcoded colors** (all colors strictly mapped to `--[theme-slug]-color-*` tokens and color scheme scopes), and all client logic into `design/script.js` written **strictly using Object-Oriented Programming (OOP)** ES6 classes with clean encapsulation, standardized lifecycles, and a central component registry. Zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
-- `docs/theme-settings.md` contains a robust, project-derived global settings contract covering the nine canonical global categories, with 1:1 matching CSS custom properties (`--[theme-slug]-*`) defined in `design/styles.css`, including the full color scheme system with at least three schemes and role-to-token mappings.
-- Global header and footer are developed strictly in `design/index.html` without duplicating markup in secondary page prototypes.
-- Realistic static fixture data is placed in `design/fixtures/` and assets in `design/assets/`.
-- `.shopifyignore` is created or updated in the project root to ignore `design/`, `docs/`, `AGENTS.md`, and `CLAUDE.md`.
-- `AGENTS.md` is created or updated in the project root with the theme conventions and strict standalone prototype rules.
+- The embedded design workspace (`.design/`) exists with all default page prototypes represented (`index.html`, `product.html`, `collection.html`, `collections-list.html`, `cart.html`, `cart-drawer.html`, `blog.html`, `article.html`, `search.html`, `page.html`, `page.contact.html`, `password.html`, `gift_card.html`, `404.html`).
+- All styles are consolidated strictly into the single shared CSS file (`.design/styles.css`) with **zero hardcoded colors** (all colors strictly mapped to `--[theme-slug]-color-*` tokens and color scheme scopes), and all client logic into `.design/script.js` written **strictly using Object-Oriented Programming (OOP)** ES6 classes with clean encapsulation, standardized lifecycles, and a central component registry. Zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
+- `.docs/theme-settings.md` contains a robust, project-derived global settings contract covering the nine canonical global categories, with 1:1 matching CSS custom properties (`--[theme-slug]-*`) defined in `.design/styles.css`, including the full color scheme system with at least three schemes and role-to-token mappings.
+- Global header and footer are developed strictly in `.design/index.html` without duplicating markup in secondary page prototypes.
+- Realistic static fixture data is placed in `.design/fixtures/` and assets in `.design/assets/`.
+- `.shopifyignore` is created or updated in the project root to ignore `.design/`, `.docs/`, `AGENTS.md`, and `CLAUDE.md`.
+- `AGENTS.md` is created or updated in the project root with the theme conventions, dot-folder architecture, and complete design contract guidance for theme development.
 - `CLAUDE.md` is created as a relative symbolic link pointing to `AGENTS.md`.
-- The prototype remains completely independent of Liquid, Shopify APIs, and any external frameworks.
+- The prototype in `.design/` remains pure HTML/CSS/JS without Liquid syntax.
 - No homepage sections or blocks were invented prematurely.
 - Completion report lists created, updated, skipped, and unresolved items.
 
 ### `/theme-forge init-agents` (or `/theme-forge agents`) is complete when:
 
-- The existing project structure, theme identifiers, CSS custom properties, and JavaScript components have been inspected.
-- `AGENTS.md` is created or updated in the project root with comprehensive guidelines scoped strictly to the standalone design prototype (tokens, OOP JS, single stylesheet/script, single header/footer in `index.html`, RTL logical properties, boundary isolation).
+- The existing theme structure, theme identifiers, CSS custom properties, and JavaScript components have been inspected.
+- `AGENTS.md` is created or updated in the theme root with comprehensive guidelines covering the `.design/` prototype contract, `.docs/theme-settings.md` settings schema, zero hardcoded color tokens, OOP JS classes, single shell rule, and Liquid conversion patterns.
 - `CLAUDE.md` is created or verified as a relative symbolic link pointing to `AGENTS.md`.
-- `.shopifyignore` is created or updated to ignore prototype and agent guidance files.
-- No existing HTML, CSS, JavaScript, fixture, or asset files were modified, overwritten, or reset.
+- `.shopifyignore` is created or updated to ignore `.design/`, `.docs/`, `AGENTS.md`, and `CLAUDE.md`.
+- No existing HTML, CSS, JavaScript, fixture, asset, or Liquid files were modified, overwritten, or reset.
 - Completion report lists created, updated, skipped, and unresolved items.
 
 ### `/theme-forge resolve` is complete when:
 
-- An audit of the existing workspace (`design/styles.css`, `design/script.js`, HTML templates, and `docs/theme-settings.md`) has been performed against the latest Theme Forge rules and standards.
-- All hardcoded color literals in `design/styles.css` have been extracted and replaced with semantic `--[theme-slug]-color-*` tokens and color scheme scopes (`:root`, `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`).
-- All physical directional CSS properties in `design/styles.css` have been converted to logical CSS properties (`*-inline-start`, `*-inline-end`, etc.) ensuring full RTL support.
-- All JavaScript in `design/script.js` is refactored into modular ES6 classes with standard lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central `ThemeApp` / `ComponentRegistry`. All floating global functions and procedural scripts are eliminated.
-- Global `<header>` and `<footer>` are consolidated strictly into `design/index.html`, and any duplicate headers/footers in secondary HTML pages have been stripped to leave clean `<main>` templates.
-- All inline styles (`style="..."`) and inline event handlers (`onclick`, etc.) have been removed from HTML files and relocated to `design/styles.css` and `design/script.js`.
-- All 14 default Shopify page prototypes exist in `design/`, with minimal accessible scaffolds (`data-prototype-status="scaffold"`) added for any missing pages.
-- `docs/theme-settings.md` is synchronized with the 9 canonical categories and matches active CSS custom properties in `design/styles.css`.
+- Any legacy standalone workspace directories (`design/`, `docs/`) have been migrated and renamed into the theme-embedded structure (`.design/`, `.docs/`).
+- An audit of the workspace (`.design/styles.css`, `.design/script.js`, HTML templates, and `.docs/theme-settings.md`) has been performed against the latest Theme Forge rules and standards.
+- All hardcoded color literals in `.design/styles.css` have been extracted and replaced with semantic `--[theme-slug]-color-*` tokens and color scheme scopes (`:root`, `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`).
+- All physical directional CSS properties in `.design/styles.css` have been converted to logical CSS properties (`*-inline-start`, `*-inline-end`, etc.) ensuring full RTL support.
+- All JavaScript in `.design/script.js` is refactored into modular ES6 classes with standard lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central `ThemeApp` / `ComponentRegistry`. All floating global functions and procedural scripts are eliminated.
+- Global `<header>` and `<footer>` are consolidated strictly into `.design/index.html`, and any duplicate headers/footers in secondary HTML pages have been stripped to leave clean `<main>` templates.
+- All inline styles (`style="..."`) and inline event handlers (`onclick`, etc.) have been removed from HTML files and relocated to `.design/styles.css` and `.design/script.js`.
+- All 14 default Shopify page prototypes exist in `.design/`, with minimal accessible scaffolds (`data-prototype-status="scaffold"`) added for any missing pages.
+- `.docs/theme-settings.md` is synchronized with the 9 canonical categories and matches active CSS custom properties in `.design/styles.css`.
 - If design skills (e.g., `frontend-design`) are available, visual refinements, hierarchy, typography scaling, and micro-interactions are integrated without violating token or boundary rules.
-- `AGENTS.md` is updated with full standalone prototype guidelines, `CLAUDE.md` is verified as a relative symlink to `AGENTS.md`, and `.shopifyignore` is updated.
-- A completion report is presented detailing created, updated, skipped, and unresolved items, including specific rule violations reconciled.
-
-
+- `AGENTS.md` is updated with full theme design guidance and directory maps, `CLAUDE.md` is verified as a relative symlink to `AGENTS.md`, and `.shopifyignore` is updated.
+- A completion report is presented detailing created, updated, skipped, and unresolved items, including specific rule violations reconciled and migrations performed.

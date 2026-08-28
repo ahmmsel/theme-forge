@@ -1,6 +1,6 @@
 {
   "eval_id": 2,
   "eval_name": "init-agents-existing-project",
-  "prompt": "Run /theme-forge init-agents against this existing project. Inspect the workspace and generate or refresh AGENTS.md and CLAUDE.md scoped strictly to the standalone design prototype rules (tokenized CSS, zero hardcoded colors, OOP JavaScript, single stylesheet, single shell) without modifying or resetting existing design or fixture files.",
+  "prompt": "Run /theme-forge init-agents against this existing Shopify theme project. Inspect the workspace and generate or refresh AGENTS.md and CLAUDE.md informing agents of the theme design contract in .design/ and .docs/ (tokenized CSS, zero hardcoded colors, OOP JavaScript, single stylesheet, single shell) and how to implement it across Liquid theme files without modifying or resetting existing design or theme files.",
   "assertions": []
 }

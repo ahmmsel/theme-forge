@@ -1,6 +1,6 @@
 {
   "eval_id": 3,
   "eval_name": "command-clarification",
-  "prompt": "I want to use Theme Forge for a storefront design prototype, but I have not said whether to initialize a new prototype or configure agent guidance for an existing project. What should I do next? Do not inspect or change files yet.",
+  "prompt": "I want to use Theme Forge for a storefront design prototype in my Shopify theme, but I have not said whether to initialize a new embedded prototype, configure agent guidance for an existing theme, or resolve/migrate a project. What should I do next? Do not inspect or change files yet.",
   "assertions": []
 }
