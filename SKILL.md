@@ -1,6 +1,6 @@
 ---
 name: theme-forge
-description: "Use this skill whenever a user is starting, planning, auditing, developing, or reconciling an eCommerce / Shopify storefront design system directly within a Shopify theme directory. Run /theme-forge init to scaffold the embedded design workspace (.design/, .docs/, tokens, AGENTS.md, CLAUDE.md), /theme-forge init-agents (or /theme-forge agents) to initialize or refresh agent guidance files in an existing theme project, or /theme-forge resolve to audit, reconcile, and resolve existing theme prototypes or migrate legacy standalone projects into the theme-embedded .design/ structure with updated skill rules, token architecture, OOP JS, and design integrations."
+description: "Use this skill whenever a user is starting, planning, auditing, developing, reconciling, or wiring an eCommerce / Shopify storefront design system directly within a Shopify theme directory. Run /theme-forge init to scaffold the embedded design workspace (.design/, .docs/, tokens, AGENTS.md, CLAUDE.md), /theme-forge init-agents (or /theme-forge agents) to initialize or refresh agent guidance files in an existing theme project, /theme-forge resolve to audit, reconcile, and resolve existing theme prototypes, or /theme-forge wire-direction (or /theme-forge wire direction) to wire the visual design direction, tokens, OOP scripts, and styles directly into the Shopify theme codebase before or alongside merchant theme settings."
 compatibility: "Plain Markdown workflow; requires filesystem access to the selected project root. Self-contained with zero runtime, build tool, framework, package manager, or external skill dependencies. No Shopify credentials required."
 ---
 
@@ -20,9 +20,10 @@ When the host supports slash commands, use:
 /theme-forge init
 /theme-forge init-agents [scope]
 /theme-forge resolve [scope]
+/theme-forge wire-direction [scope]
 ```
 
-*(Note: `/theme-forge agents` is supported as an alias for `/theme-forge init-agents`.)*
+*(Note: `/theme-forge agents` is supported as an alias for `/theme-forge init-agents`. `/theme-forge wire direction` and `/theme-forge wire-design` are supported as aliases for `/theme-forge wire-direction`.)*
 
 Target scopes for `init-agents`:
 - `all` (default): Refresh full agent guidance in `AGENTS.md`, ensure `CLAUDE.md` symlink, and update `.shopifyignore`.
@@ -34,17 +35,24 @@ Target scopes for `resolve`:
 - `migration`: Detect and convert legacy standalone directories (`design/`, `docs/`) to theme-embedded dot-prefixed directories (`.design/`, `.docs/`), updating paths, `.shopifyignore`, and `AGENTS.md`.
 - `styles`: Audit and reconcile `.design/styles.css` (zero hardcoded colors, 9-category CSS custom properties, color scheme scoping, bidirectional logical CSS properties).
 - `scripts`: Audit and refactor `.design/script.js` into ES6 OOP classes with standardized lifecycles (`init`, `destroy`) and a central component registry.
-- `templates`: Normalize HTML prototype templates in `.design/` (enforce single header/footer in `index.html`, strip duplicate header/footer from secondary pages, strip inline styles/scripts, add missing default page scaffolds).
+- `templates`: Normalize HTML prototype templates in `.design/` (enforce single header/footer in `index.html`, strip duplicate header/footer from secondary pages, strip inline styles/scripts, strip visual scaffold banners/disclaimers, add missing default page scaffolds without scaffold banners).
 - `docs`: Reconcile and synchronize `.docs/theme-settings.md` global settings contract with active code tokens and features.
 
-When the host does not support slash commands, interpret `init`, `init-agents`, `agents`, or `resolve` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
+Target scopes for `wire-direction`:
+- `all` (default): Full wiring of design direction—deploys production master stylesheet (`assets/[theme-slug]-direction.css` or `assets/[theme-slug].css`), deploys OOP JavaScript runtime (`assets/[theme-slug].js`), generates token bridge snippet (`snippets/[theme-slug]-direction.liquid`) with aesthetic fallback values that function out-of-the-box before `settings_schema.json` is configured, syncs static assets from `.design/assets/` to `assets/`, and injects theme tags and direction data attributes into `layout/theme.liquid`.
+- `styles`: Deploy/refresh only `assets/[theme-slug]-direction.css` and the token bridge snippet `snippets/[theme-slug]-direction.liquid`.
+- `scripts`: Deploy/refresh only `assets/[theme-slug].js`.
+- `layout`: Wire/update only `layout/theme.liquid` (injects render tag, stylesheet link, deferred script tag, `data-theme-direction`, and color scheme data attributes).
+- `assets`: Sync static brand and design direction media/font assets from `.design/assets/` to `assets/`.
+
+When the host does not support slash commands, interpret `init`, `init-agents`, `agents`, `resolve`, `wire-direction`, `wire direction`, or `wire-design` as the first user-provided argument to the skill. If no command is provided, explain the available commands and ask which one to run. Do not silently choose a command.
 
 The skill must work from a project directory, not only from the directory where the skill file is installed. Resolve all project paths relative to the user's selected project root.
 
 ### Optional Design Skill Integration
 
 - If the `frontend-design` skill (or an equivalent frontend design skill) is installed and available in the environment, leverage it to guide visual direction, layout hierarchy, typography, color schemes, motion, and UI refinement when prototyping in `.design/` or resolving existing theme styles.
-- During `/theme-forge resolve`, leverage available design skills to review visual craft, contrast, typography scaling, responsive behaviors, and micro-interactions while strictly enforcing Theme Forge token and architecture rules.
+- During `/theme-forge resolve` and `/theme-forge wire-direction`, leverage available design skills to review visual craft, contrast, typography scaling, responsive behaviors, and micro-interactions while strictly enforcing Theme Forge token and architecture rules.
 - If `frontend-design` is not installed, proceed normally using Theme Forge's built-in design principles. Do not fail, block, or attempt automatic package installation.
 - Always preserve Theme Forge boundaries: all prototype styles must live strictly in `.design/styles.css`, client scripts in `.design/script.js`, with no inline styles/scripts and no Liquid in prototypes.
 
@@ -54,8 +62,9 @@ The skill must work from a project directory, not only from the directory where 
 2. If it is `init`, follow the theme-embedded prototype initialization workflow.
 3. If it is `init-agents` or `agents`, follow the existing theme agent initialization workflow (generating or refreshing theme-aware `AGENTS.md` referencing `.design/` and `.docs/` without modifying design or theme code).
 4. If it is `resolve`, follow the existing theme resolution, migration, and reconciliation workflow (migrating standalone structures to `.design/` and `.docs/`, auditing and updating styles, scripts, templates, settings contract, and integrations).
-5. If no command is present, explain the valid commands (`init`, `init-agents`, `resolve`) and ask which one to run; do not inspect or modify project files yet.
-6. If the command is unknown, show the valid commands and ask the user to choose.
+5. If it is `wire-direction`, `wire direction`, or `wire-design`, follow the theme design direction wiring workflow (deploying master stylesheet, OOP JavaScript runtime, direction token bridge snippet, static assets, and wiring `layout/theme.liquid` before or alongside merchant theme settings).
+6. If no command is present, explain the valid commands (`init`, `init-agents`, `resolve`, `wire-direction`) and ask which one to run; do not inspect or modify project files yet.
+7. If the command is unknown, show the valid commands and ask the user to choose.
 
 At the start of a command, state the selected project root, command, and the files that will be inspected or created. At completion, report four separate lists: created, updated, skipped, and unresolved. Keep the report factual and distinguish observations from recommendations.
 
@@ -270,7 +279,8 @@ This command is ideal for:
 4. **Resolve HTML Prototype Templates (`.design/*.html`)** (Scope: `all` or `templates`):
    - **Single Header & Footer Rule**: Ensure the full global `<header>` and `<footer>` live strictly in `.design/index.html`. Strip duplicated header and footer markup from secondary pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.), retaining only page-specific `<main>` content.
    - **Strip Inline Code**: Remove all inline `style="..."` attributes and inline event handlers (`onclick`, `onchange`, etc.). Relocate styles to `.design/styles.css` and event handlers to `.design/script.js` classes.
-   - **Default Page Completeness**: Verify all 14 default Shopify prototype pages are present (`index.html`, `404.html`, `article.html`, `blog.html`, `cart.html`, `cart-drawer.html`, `collection.html`, `collections-list.html`, `page.html`, `page.contact.html`, `password.html`, `product.html`, `search.html`, `gift_card.html`). Create minimal accessible scaffolds (`data-prototype-status="scaffold"`) for any missing pages.
+   - **Strip Visual Scaffold Banners**: Remove any visual scaffold banners, disclaimer ribbons, warning bars, or "under construction" callouts from prototype pages. Scaffold status is captured solely via `data-prototype-status="scaffold"` on `<main>` so pages render cleanly.
+   - **Default Page Completeness**: Verify all 14 default Shopify prototype pages are present (`index.html`, `404.html`, `article.html`, `blog.html`, `cart.html`, `cart-drawer.html`, `collection.html`, `collections-list.html`, `page.html`, `page.contact.html`, `password.html`, `product.html`, `search.html`, `gift_card.html`). Create minimal accessible scaffolds (`data-prototype-status="scaffold"`) for any missing pages without visual scaffold banners.
    - **Accessibility & Semantics**: Ensure semantic HTML5 elements (`<main>`, `<nav>`, `<article>`, `<section>`, `<dialog>`, `<details>`), form labels, ARIA roles, and keyboard focus states.
 
 5. **Reconcile Global Settings Contract (`.docs/theme-settings.md`)** (Scope: `all` or `docs`):
@@ -287,7 +297,109 @@ This command is ideal for:
    - Ensure `.shopifyignore` contains entries for `.design/`, `.docs/`, `AGENTS.md`, and `CLAUDE.md`.
 
 8. **Completion Report**:
-   - Provide a factual summary separating created, updated, skipped, and unresolved items, highlighting rule violations resolved (e.g. standalone directories migrated, hardcoded colors tokenized, classes created, secondary page headers stripped).
+   - Provide a factual summary separating created, updated, skipped, and unresolved items, highlighting rule violations resolved (e.g. standalone directories migrated, hardcoded colors tokenized, classes created, secondary page headers stripped, scaffold banners removed).
+
+---
+
+### `/theme-forge wire-direction [scope]` (Alias: `/theme-forge wire direction`, `/theme-forge wire-design`)
+
+Wire and inject the visual design direction developed in `.design/` directly into the production Shopify theme codebase (`assets/`, `snippets/`, `layout/theme.liquid`) **before or alongside** building merchant theme settings (`config/settings_schema.json`).
+
+#### Why Wire Design Direction Before Settings?
+
+In standard Shopify theme development, developers often experience schema paralysis—attempting to write hundreds of lines of `config/settings_schema.json` before they can preview their visual styles in the theme.
+
+Theme Forge eliminates this bottleneck with a **design-direction-first wiring architecture**:
+1. **Immediate Live Preview via Shopify CLI**: Developers and merchants can immediately run `shopify theme dev` and see the complete, authentic visual aesthetic (typography scales, color schemes, surface depths, shadows, borders, transitions, and OOP JavaScript interactions) running live inside Shopify.
+2. **Decoupled Visual Testing**: Allows immediate visual QA on real Shopify templates before spending time creating admin form controls.
+3. **Fallback-First Token Architecture**: In `snippets/[theme-slug]-direction.liquid`, every CSS custom property is defined with the design direction's aesthetic value as an immediate fallback (e.g., `--[theme-slug]-color-background: {{ settings.color_primary_bg | default: '#fafafa' }};`).
+   - If `settings_schema.json` is not yet configured or populated, the theme falls back to the exact design direction values derived from `.design/styles.css`.
+   - Once merchant settings are wired into `config/settings_schema.json` later, the snippet automatically consumes `settings.*` values without requiring changes to components or CSS!
+
+#### `wire-direction` Execution Steps:
+
+1. **Shopify Theme & Prototype Verification (Prerequisite Check)**:
+   - Verify that the target workspace contains a valid Shopify theme (`layout/theme.liquid`, `templates/`, `sections/`, `snippets/`, `assets/`). If absent, halt and report.
+   - Verify that `.design/` exists and contains `.design/styles.css`. If absent, halt and prompt the user to initialize a prototype with `/theme-forge init` first.
+
+2. **Extract Design Direction & Aesthetic Tokens**:
+   - Inspect `.docs/theme-settings.md` and `.design/styles.css` to extract:
+     - Theme slug (`--[theme-slug]-*` namespace).
+     - Chosen design direction (e.g. Neo-Brutalist, Minimalist, Swiss, Editorial, Glassmorphism, Neumorphism).
+     - Color scheme roles (background, text, buttons, borders, links, icons) for Primary, Secondary, and Contrast schemes.
+     - Four typographic roles (`display`, `heading`, `body`, `accent`) and referenced web fonts (e.g. Google Fonts or system stacks).
+     - Aesthetic surface tokens (radii, elevation/box-shadows, borders, backdrop-filters, transitions).
+
+3. **Deploy Production Theme Stylesheet (`assets/[theme-slug]-direction.css` or `assets/[theme-slug].css`)** (Scope: `all` or `styles`):
+   - Copy or adapt the master stylesheet from `.design/styles.css` into `assets/[theme-slug]-direction.css` (or `assets/[theme-slug].css`).
+   - Maintain the **Strict Zero Hardcoded Colors Rule**: every color property references `--[theme-slug]-color-*` tokens scoped to color schemes.
+   - Maintain bidirectional CSS logical properties (`margin-inline-start`, `padding-inline-end`, etc.) ensuring native RTL compatibility.
+
+4. **Deploy Production OOP JavaScript Runtime (`assets/[theme-slug].js`)** (Scope: `all` or `scripts`):
+   - Deploy `.design/script.js` to `assets/[theme-slug].js`.
+   - Ensure the ES6 OOP component classes (`HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`, `ModalManager`, etc.) and central `ThemeApp` / component registry are cleanly exported and ready for the Shopify storefront lifecycle.
+
+5. **Generate Direction Token Bridge Snippet (`snippets/[theme-slug]-direction.liquid`)** (Scope: `all` or `styles`):
+   - Create or update `snippets/[theme-slug]-direction.liquid`.
+   - Include external font links (e.g., Google Fonts `<link rel="preconnect">` and `<link rel="stylesheet">` matching the design direction's typographic pairing).
+   - Inject a `<style id="{{ theme_slug }}-direction-tokens">` tag declaring CSS custom properties for `:root`, `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, and `[data-color-scheme="contrast"]`.
+   - Map each token to its Liquid `settings` candidate using the design direction's aesthetic value as the fallback:
+     ```liquid
+     {% comment %}
+       Theme Forge: Design Direction Token Bridge
+       Injects design direction CSS custom properties with fallback values.
+       Renders the complete aesthetic immediately before or alongside settings_schema.json.
+     {% endcomment %}
+     <style id="{{ theme_slug }}-direction-tokens">
+       :root,
+       [data-color-scheme="primary"] {
+         --{{ theme_slug }}-color-background: {{ settings.color_primary_bg | default: '[direction_primary_bg]' }};
+         --{{ theme_slug }}-color-text: {{ settings.color_primary_text | default: '[direction_primary_text]' }};
+         --{{ theme_slug }}-color-primary-button: {{ settings.color_primary_button_bg | default: '[direction_btn_bg]' }};
+         --{{ theme_slug }}-color-on-primary-button: {{ settings.color_primary_button_text | default: '[direction_btn_text]' }};
+         --{{ theme_slug }}-color-links: {{ settings.color_primary_links | default: '[direction_links]' }};
+
+         /* Direction Aesthetic Tokens */
+         --{{ theme_slug }}-type-display-font-family: {{ settings.type_display_font.family | default: '[direction_display_font]' }};
+         --{{ theme_slug }}-type-heading-font-family: {{ settings.type_heading_font.family | default: '[direction_heading_font]' }};
+         --{{ theme_slug }}-type-body-font-family: {{ settings.type_body_font.family | default: '[direction_body_font]' }};
+         --{{ theme_slug }}-type-accent-font-family: {{ settings.type_accent_font.family | default: '[direction_accent_font]' }};
+
+         --{{ theme_slug }}-border-radius: {{ settings.border_radius | default: '[direction_radius]' }};
+         --{{ theme_slug }}-elevation-shadow: {{ settings.elevation_shadow | default: '[direction_shadow]' }};
+         --{{ theme_slug }}-surface-backdrop: {{ settings.surface_backdrop | default: '[direction_backdrop]' }};
+       }
+
+       [data-color-scheme="secondary"] {
+         --{{ theme_slug }}-color-background: {{ settings.color_secondary_bg | default: '[direction_sec_bg]' }};
+         --{{ theme_slug }}-color-text: {{ settings.color_secondary_text | default: '[direction_sec_text]' }};
+       }
+
+       [data-color-scheme="contrast"] {
+         --{{ theme_slug }}-color-background: {{ settings.color_contrast_bg | default: '[direction_contrast_bg]' }};
+         --{{ theme_slug }}-color-text: {{ settings.color_contrast_text | default: '[direction_contrast_text]' }};
+       }
+     </style>
+     ```
+
+6. **Wire `layout/theme.liquid`** (Scope: `all` or `layout`):
+   - Inspect `layout/theme.liquid` and non-destructively inject the direction assets before `</head>`:
+     ```liquid
+     {% render '[theme-slug]-direction' %}
+     {{ '[theme-slug]-direction.css' | asset_url | stylesheet_tag }}
+     {{ '[theme-slug].js' | asset_url | script_tag: defer: 'defer' }}
+     ```
+   - Ensure the root `<html>` or `<body>` element includes the direction and initial color scheme attributes:
+     ```html
+     <body class="[theme-slug]-theme" data-theme-direction="[direction_slug]" data-color-scheme="primary">
+     ```
+
+7. **Sync Static Media and Brand Assets** (Scope: `all` or `assets`):
+   - Copy brand assets, icons, SVGs, and fonts from `.design/assets/` to `assets/` so all paths referenced in CSS or Liquid resolve properly.
+
+8. **Report Completion**:
+   - Provide a factual summary of created files (`assets/`, `snippets/`), updated files (`layout/theme.liquid`), skipped files, and unresolved items.
+   - Confirm that the visual design direction is now live in Shopify and ready for `shopify theme dev`, sections wiring, or future `settings_schema.json` customization.
 
 #### `.shopifyignore` Configuration
 
@@ -320,6 +432,7 @@ Create `AGENTS.md` in the project root if it does not exist, or update an existi
    - **Strict Zero Hardcoded Colors Rule**: Both `.design/styles.css` and theme stylesheets must NEVER contain hardcoded color literals (no hex `#...`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, or named colors like `white`, `black`, `red`). Every single color value across all components, utilities, and states must strictly reference semantic CSS variables / tokens (`var(--[theme-slug]-color-*)`) scoped to color schemes (`[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`).
    - **Strict Object-Oriented JavaScript (OOP) Rule**: All interactive features must strictly follow an Object-Oriented Programming architecture using ES6 classes (e.g., `HeaderController`, `CartDrawer`, `ProductGallery`, `VariantSelector`, `PredictiveSearch`, `FilterDrawer`, `ModalManager`) with standardized lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central component registry/app bootstrap. No loose procedural scripts or global floating functions.
    - **Single Header & Footer Rule in Prototypes**: The global `<header>` and `<footer>` must **strictly only be developed in `.design/index.html`** (the shared shell). Never duplicate full header and footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, etc.); secondary pages contain only their page-specific `<main>` template content.
+   - **Clean Scaffold Pages (No Scaffold Banners)**: Any minimal accessible scaffolds created for secondary pages (`data-prototype-status="scaffold"`) must never contain visual scaffold banners, disclaimer ribbons, or placeholder notices. Scaffold status is strictly an HTML attribute on the `<main>` tag, keeping pages visually authentic, clean, and styled with theme tokens.
    - **Bidirectional-Safe Layout**: Use CSS logical properties (`margin-inline-start`/`end`, `padding-inline-start`/`end`, `inset-inline-start`/`end`, `text-align: start`/`end`) to guarantee built-in RTL compatibility.
 3. **Workspace Directory Map**:
    - `.design/`: Pure HTML/CSS/JS prototype workspace, styles, scripts, fixtures, assets.
@@ -329,6 +442,7 @@ Create `AGENTS.md` in the project root if it does not exist, or update an existi
    - `/theme-forge init`: Initialize embedded design workspace and global settings contract inside the theme.
    - `/theme-forge init-agents` (alias `/theme-forge agents`): Initialize or refresh theme `AGENTS.md` instructions and `.shopifyignore`.
    - `/theme-forge resolve [scope]`: Migrate standalone workspaces to `.design/` and `.docs/`, and audit/reconcile existing prototype styles, scripts, templates, settings contracts, and design integrations.
+   - `/theme-forge wire-direction [scope]` (alias `/theme-forge wire direction`, `/theme-forge wire-design`): Wire and deploy design direction tokens, master stylesheet, OOP JavaScript runtime, and static assets directly into the Shopify theme before or alongside theme settings.
 5. **Modification & Safety Rules**:
    - Never overwrite user files without confirmation.
    - Respect boundaries between prototype design files in `.design/` and production theme code.
@@ -340,7 +454,7 @@ For the `CLAUDE.md` symbolic link:
 - If a symlink or file named `CLAUDE.md` already exists, preserve it if it points to `AGENTS.md` or report it under `skipped` / `updated`.
 - If symbolic link creation fails (e.g., due to filesystem limitations), report it under `unresolved` with manual creation instructions.
 
-Do not create empty HTML files that imply a finished design. If a page prototype does not exist, create a minimal accessible scaffold with a clear `data-prototype-status="scaffold"` marker, or record the missing page in `.docs/theme-settings.md` when the user asks for documentation only.
+Do not create empty HTML files that imply a finished design. If a page prototype does not exist, create a minimal accessible scaffold with a clear `data-prototype-status="scaffold"` marker on the `<main>` element, or record the missing page in `.docs/theme-settings.md` when the user asks for documentation only. Scaffold pages must NEVER include a visual scaffold banner, prototype ribbon, warning bar, or "under construction" alert box. Keep the UI clean, authentic, and free of banner clutter—status is tracked strictly via the HTML data attribute.
 
 Do not build homepage sections or blocks during initialization. `.design/index.html` should establish the shared shell only. Homepage composition is a separate design task after the global settings and default page layouts are credible.
 
@@ -352,6 +466,7 @@ The prototype must use:
 - Single stylesheet rule: every style across the prototype must reside in the single shared CSS file (`.design/styles.css`). Never write or inject inline CSS (using `style` attributes or `<style>` blocks) or inline JavaScript (using event attributes like `onclick` or inline `<script>` blocks) inside any HTML page.
 - **Strict Zero Hardcoded Colors Rule**: `.design/styles.css` must NEVER contain any hardcoded color literals (hex, rgb, rgba, hsl, or named colors). Every color property (`color`, `background-color`, `border-color`, `box-shadow`, `fill`, `stroke`, etc.) must strictly reference semantic CSS custom properties (`var(--[theme-slug]-color-*)`).
 - Single header and footer source of truth: Develop the global `<header>` and `<footer>` **strictly in `.design/index.html`** (the shared shell). Never duplicate header or footer markup in secondary prototype pages (`product.html`, `collection.html`, `cart.html`, `404.html`, etc.). All other prototype pages focus purely on their page-specific `<main>` content to eliminate duplication and maintenance overhead.
+- **No Scaffold Banners**: Scaffold pages must NOT display any visual scaffold banner, disclaimer ribbon, or alert box. Identify scaffold status strictly via the HTML data attribute (`<main data-prototype-status="scaffold">`), leaving the page layout clean, styled with theme tokens, and visually seamless.
 - Plain CSS only — no CSS frameworks, preprocessors, or utility libraries (no Tailwind, Bootstrap, etc.).
 - **Vanilla JavaScript only (Object-Oriented / OOP)** — structured strictly using Object-Oriented Programming with ES6 classes, encapsulated component controllers, explicit lifecycles, and a clean component registry; no loose procedural scripts, no global floating functions, and no JS frameworks, libraries, or build tools (no React, Alpine, GSAP, etc.).
 - Static fixtures in `.design/fixtures/` that resemble future Shopify data but contain no Liquid or Shopify API calls.
@@ -1176,7 +1291,7 @@ Primary objects: global `shop`, `routes`, `linklists`, `localization`
 - The selected workspace is verified as an existing Shopify theme directory containing standard theme architecture (`layout/`, `templates/`, `sections/`, `snippets/`, `config/`, etc.); non-theme directories are strictly rejected before creating files.
 - The requested theme identity and category are recorded in `.docs/theme-settings.md`.
 - The design direction is documented with key visual characteristics.
-- The embedded design workspace (`.design/`) exists with all default page prototypes represented (`index.html`, `product.html`, `collection.html`, `collections-list.html`, `cart.html`, `cart-drawer.html`, `blog.html`, `article.html`, `search.html`, `page.html`, `page.contact.html`, `password.html`, `gift_card.html`, `404.html`).
+- The embedded design workspace (`.design/`) exists with all default page prototypes represented (`index.html`, `product.html`, `collection.html`, `collections-list.html`, `cart.html`, `cart-drawer.html`, `blog.html`, `article.html`, `search.html`, `page.html`, `page.contact.html`, `password.html`, `gift_card.html`, `404.html`), with any minimal scaffolds containing no visual scaffold banner.
 - All styles are consolidated strictly into the single shared CSS file (`.design/styles.css`) with **zero hardcoded colors** (all colors strictly mapped to `--[theme-slug]-color-*` tokens and color scheme scopes), and all client logic into `.design/script.js` written **strictly using Object-Oriented Programming (OOP)** ES6 classes with clean encapsulation, standardized lifecycles, and a central component registry. Zero inline CSS (`style` attributes, `<style>` tags) or inline JS (`onclick`, inline `<script>` tags) in HTML pages.
 - `.docs/theme-settings.md` contains a robust, project-derived global settings contract covering the nine canonical global categories, with 1:1 matching CSS custom properties (`--[theme-slug]-*`) defined in `.design/styles.css`, including the full color scheme system with at least three schemes and role-to-token mappings.
 - Global header and footer are developed strictly in `.design/index.html` without duplicating markup in secondary page prototypes.
@@ -1204,10 +1319,21 @@ Primary objects: global `shop`, `routes`, `linklists`, `localization`
 - All hardcoded color literals in `.design/styles.css` have been extracted and replaced with semantic `--[theme-slug]-color-*` tokens and color scheme scopes (`:root`, `[data-color-scheme="primary"]`, `[data-color-scheme="secondary"]`, `[data-color-scheme="contrast"]`).
 - All physical directional CSS properties in `.design/styles.css` have been converted to logical CSS properties (`*-inline-start`, `*-inline-end`, etc.) ensuring full RTL support.
 - All JavaScript in `.design/script.js` is refactored into modular ES6 classes with standard lifecycle methods (`constructor`, `init`, `bindEvents`, `destroy`) and coordinated via a central `ThemeApp` / `ComponentRegistry`. All floating global functions and procedural scripts are eliminated.
-- Global `<header>` and `<footer>` are consolidated strictly into `.design/index.html`, and any duplicate headers/footers in secondary HTML pages have been stripped to leave clean `<main>` templates.
+- Global `<header>` and `<footer>` are consolidated strictly into `.design/index.html`, and any duplicate headers/footers or visual scaffold banners in secondary HTML pages have been stripped to leave clean `<main>` templates.
 - All inline styles (`style="..."`) and inline event handlers (`onclick`, etc.) have been removed from HTML files and relocated to `.design/styles.css` and `.design/script.js`.
-- All 14 default Shopify page prototypes exist in `.design/`, with minimal accessible scaffolds (`data-prototype-status="scaffold"`) added for any missing pages.
+- All 14 default Shopify page prototypes exist in `.design/`, with minimal accessible scaffolds (`data-prototype-status="scaffold"`) added for any missing pages without visual scaffold banners.
 - `.docs/theme-settings.md` is synchronized with the 9 canonical categories and matches active CSS custom properties in `.design/styles.css`.
 - If design skills (e.g., `frontend-design`) are available, visual refinements, hierarchy, typography scaling, and micro-interactions are integrated without violating token or boundary rules.
 - `AGENTS.md` is updated with full theme design guidance and directory maps, `CLAUDE.md` is verified as a relative symlink to `AGENTS.md`, and `.shopifyignore` is updated.
 - A completion report is presented detailing created, updated, skipped, and unresolved items, including specific rule violations reconciled and migrations performed.
+
+### `/theme-forge wire-direction` is complete when:
+
+- The workspace is verified as an existing Shopify theme with an existing `.design/` prototype workspace containing `.design/styles.css`.
+- The design direction visual foundations (typography font pairings, color schemes, surface depths, shadows, radii, borders, and transitions) are extracted from `.design/` and `.docs/theme-settings.md`.
+- `assets/[theme-slug]-direction.css` (or `assets/[theme-slug].css`) is deployed as the master production stylesheet, strictly obeying the zero hardcoded colors rule and logical CSS properties.
+- `assets/[theme-slug].js` is deployed with modular ES6 OOP classes and central `ThemeApp` component registry.
+- `snippets/[theme-slug]-direction.liquid` is created with a CSS custom property declaration block using design direction aesthetic default fallbacks (`default: '[direction_value]'`), ensuring the theme renders authentically in Shopify immediately before or alongside `config/settings_schema.json`.
+- `layout/theme.liquid` has been non-destructively wired to render `snippets/[theme-slug]-direction.liquid`, load the production stylesheet and deferred OOP script, and contain `data-theme-direction` and `data-color-scheme="primary"` root attributes.
+- Static media, brand, and font assets from `.design/assets/` are synchronized to `assets/`.
+- A factual completion report is presented detailing created files, updated files, skipped files, and unresolved items.
